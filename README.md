@@ -31,10 +31,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * I took the timestamps I manually noted down (from watching the replays in Neon Player) and hardcoded them into a dictionary. This dictionary maps each recording ID to the exact start and end seconds of every level. Similarly, I defined another dictionary containing the normalized bounding boxes (x, y) for Waldo in each level.
     <br/>
     <br/>
-    * The script iterates through these specific time slices and filters the gaze data. Crucially, I didn't just look for perfect hits. I implemented a logic that classifies a look as direct if it falls exactly inside Waldo's box, or peripheral if it falls within a specific margin around him. This is important because it captures the moments when the participant spotted Waldo without staring dead-center at him.
+* The script iterates through these specific time slices and filters the gaze data. Crucially, I didn't just look for perfect hits. I implemented a logic that classifies a look as direct if it falls exactly inside Waldo's box, or peripheral if it falls within a specific margin around him. This is important because it captures the moments when the participant spotted Waldo without staring dead-center at him.
     <br/>
     <br/>
-    * It generates the csv files containing only the relevant fixations.
+* It generates the csv files containing only the relevant fixations.
     <br/>
     <br/>
 2. features_build.py
@@ -45,10 +45,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * This script reads the general fixation data (from the **recordings/** folder) and the specific Waldo hit data (from the **waldo_fixations/** folder) to calculate complex behavioral metrics.
     <br/>
     <br/>
-    * Calculated Metrics Include: I compute the Saccade Length Average (a proxy for search speed), Fixation Revisits (a measure of confusion/inefficiency), and Gaze Entropy (quantifying the randomness of the search pattern). I also calculate various fixation ratios and duration averages.
+* Calculated Metrics Include: I compute the Saccade Length Average (a proxy for search speed), Fixation Revisits (a measure of confusion/inefficiency), and Gaze Entropy (quantifying the randomness of the search pattern). I also calculate various fixation ratios and duration averages.
     <br/>
     <br/>
-    * The script generates individual csv files for each recording and a final summary table (`features_summary.csv`) containing the complete behavioral profile for all participants, ready for comparative analysis.
+* The script generates individual csv files for each recording and a final summary table (`features_summary.csv`) containing the complete behavioral profile for all participants, ready for comparative analysis.
     <br/>
     <br/>
 3. data_build.py
@@ -59,10 +59,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * This script converts the normalized coordinates into visual Heatmaps (kde and gaussian). The purpose is to see the density of attention across the entire map.
     <br/>
     <br/>
-    * Crucially, it runs a clustering algorithm (DBSCAN) on the raw gaze data to find Distractors—specific spots on the map that repeatedly tricked people but were not Waldo. This identifies human confusion.
+* Crucially, it runs a clustering algorithm (DBSCAN) on the raw gaze data to find Distractors—specific spots on the map that repeatedly tricked people but were not Waldo. This identifies human confusion.
     <br/>
     <br/>
-    * It generates the visual maps (.png and .npy files) and cluster statistics for each recording.
+* It generates the visual maps (.png and .npy files) and cluster statistics for each recording.
     <br/>
     <br/>
 4. compute_saliency_metrics.py
@@ -73,10 +73,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * The core of the script is loading or generating the Saliency Map—the computer's guess of where people should look, based purely on image contrast and color.
     <br/>
     <br/>
-    * It compares the human fixations against this Saliency Map using standard academic metrics: NSS and AUC-Judd. These metrics determine if the human was guided by basic visual stimuli (bottom-up) or by complex strategies (top-down).
+* It compares the human fixations against this Saliency Map using standard academic metrics: NSS and AUC-Judd. These metrics determine if the human was guided by basic visual stimuli (bottom-up) or by complex strategies (top-down).
     <br/>
     <br/>
-    * It outputs a final summary csv table containing all metric scores for the analysis.
+* It outputs a final summary csv table containing all metric scores for the analysis.
     <br/>
     <br/>
 5. metrics_summary.py
@@ -87,10 +87,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * This script loops through all the outputs from steps 1-4 (metrics, fixations, saliency data) and combines them into one single csv file (`metrics_summary.csv`).
     <br/>
     <br/>
-    * It also generates the final high-quality visual overlays needed for the presentation, ensuring the heatmaps look smooth and professional.
+* It also generates the final high-quality visual overlays needed for the presentation, ensuring the heatmaps look smooth and professional.
     <br/>
     <br/>
-    * It generates the final, combined csv report and the visual overlays.
+* It generates the final, combined csv report and the visual overlays.
     <br/>
     <br/>
 6.  Yolo Standard Training.ipynb
@@ -101,10 +101,10 @@ I manually watched every video using Neon Player, noted the exact start and stop
 * As the test images' quality is bad, I added some preprocessing to highlight Waldo’s stripes. The core is the retry mechanism: First, it scans quickly at standard resolution. If it fails, it tries the other branch.
     <br/>
     <br/>
-    * This involves re-loading the image at high resolution, lowering the confidence threshold, and using augmentation (zooming/rotating) trying to mimic a human’s deep scan.
+* This involves re-loading the image at high resolution, lowering the confidence threshold, and using augmentation (zooming/rotating) trying to mimic a human’s deep scan.
     <br/>
     <br/>
-    * It performs the final detection and displays the result on screen.
+* It performs the final detection and displays the result on screen.
     <br/>
     <br/>
 
