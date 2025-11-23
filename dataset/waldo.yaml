@@ -1,0 +1,7 @@
+path: D:/Agenti/FindWaldo/dataset
+
+train: train/images
+val: val/images
+
+nc: 1
+names: ["waldo"]

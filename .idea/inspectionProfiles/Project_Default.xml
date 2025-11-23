@@ -1,0 +1,46 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <list>
+          <option value="fastapi" />
+          <option value="uvicorn" />
+          <option value="pydantic" />
+          <option value="pydantic-settings" />
+          <option value="python-dotenv" />
+          <option value="psycopg2-binary" />
+          <option value="sqlalchemy" />
+          <option value="torch" />
+          <option value="transformers" />
+          <option value="accelerate" />
+          <option value="bitsandbytes" />
+          <option value="sentence-transformers" />
+          <option value="faiss-cpu" />
+          <option value="pytesseract" />
+          <option value="pdf2image" />
+          <option value="Pillow" />
+          <option value="streamlit" />
+          <option value="requests" />
+          <option value="pytest" />
+          <option value="httpx" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N806" />
+          <option value="N803" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="typing.NamedTuple.multi_hand_landmarks" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

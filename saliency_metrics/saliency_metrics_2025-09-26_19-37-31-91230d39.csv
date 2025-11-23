@@ -1,0 +1,2 @@
+recording_id,num_fixations_total,num_fixations_waldo,NSS_all_vs_saliency,NSS_waldo_vs_saliency,KL_fixmap_saliency,Pearson_fixmap_saliency,AUCJ_fix_saliency,AUCJ_waldo_saliency
+2025-09-26_19-37-31-91230d39,218,10,0.10048259049654007,0.40212956070899963,1.1432141751596177,-0.016633793711662292,0.5401921296296297,0.6576500000000001
