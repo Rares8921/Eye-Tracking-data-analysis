@@ -5,10 +5,11 @@ from scipy.ndimage import gaussian_filter
 from sklearn.metrics import auc
 from scipy.stats import pearsonr
 import cv2
+import plotly.graph_objects as go
 
 recordings_dir = "recordings"
 attention_dir = "attention_maps"
-saliency_dir = "saliency" #saliency_metrics
+saliency_dir = "saliency"  # saliency_metrics
 out_dir = "saliency_metrics"
 os.makedirs(out_dir, exist_ok=True)
 
@@ -16,11 +17,13 @@ MAP_W = 224
 MAP_H = 224
 GAUSS_SIG = 6
 
+
 def safe_read_csv(p):
     try:
         return pd.read_csv(p)
     except:
         return None
+
 
 def make_fix_map_from_fixations(fix_file, w=MAP_W, h=MAP_H):
     df = safe_read_csv(fix_file)
@@ -51,6 +54,7 @@ def make_fix_map_from_fixations(fix_file, w=MAP_W, h=MAP_H):
     fix_points = list(zip(xs.tolist(), ys.tolist()))
     return im.astype(np.float32), fix_points
 
+
 def load_attention_map(rec_id):
     p = os.path.join(attention_dir, f"{rec_id}_map_all.npy")
     if os.path.exists(p):
@@ -61,6 +65,7 @@ def load_attention_map(rec_id):
             m = m.astype(np.float32) / m.max()
         return m
     return None
+
 
 def compute_saliency_from_image(img, w=MAP_W, h=MAP_H):
     if img is None:
@@ -77,9 +82,9 @@ def compute_saliency_from_image(img, w=MAP_W, h=MAP_H):
     except:
         grayf = cv2.resize(gray.astype(np.float32), (w, h))
         dft = cv2.dft(grayf, flags=cv2.DFT_COMPLEX_OUTPUT)
-        mag, ang = cv2.cartToPolar(dft[:,:,0], dft[:,:,1])
+        mag, ang = cv2.cartToPolar(dft[:, :, 0], dft[:, :, 1])
         logmag = np.log(mag + 1e-9)
-        avg = cv2.GaussianBlur(logmag, (3,3), 0)
+        avg = cv2.GaussianBlur(logmag, (3, 3), 0)
         spectral = logmag - avg
         exp_spec = np.exp(spectral)
         salmap = (exp_spec - exp_spec.min()) / (exp_spec.max() - exp_spec.min() + 1e-9)
@@ -87,6 +92,7 @@ def compute_saliency_from_image(img, w=MAP_W, h=MAP_H):
     if salmap.max() > 0:
         salmap = salmap / salmap.max()
     return salmap.astype(np.float32)
+
 
 def load_reference_image(rec_path):
     candidates = ["surface_image.png", "image.png", "frame.png", "world.png", "world.jpg", "world_frame.png"]
@@ -110,6 +116,7 @@ def load_reference_image(rec_path):
             return frame
     return None
 
+
 def nss_metric(saliency, fix_points):
     if len(fix_points) == 0:
         return np.nan
@@ -117,10 +124,11 @@ def nss_metric(saliency, fix_points):
     s = (s - s.mean()) / (s.std() + 1e-9)
     vals = []
     for x, y in fix_points:
-        xi = int(np.clip(x * (s.shape[1]-1), 0, s.shape[1]-1))
-        yi = int(np.clip(y * (s.shape[0]-1), 0, s.shape[0]-1))
+        xi = int(np.clip(x * (s.shape[1] - 1), 0, s.shape[1] - 1))
+        yi = int(np.clip(y * (s.shape[0] - 1), 0, s.shape[0] - 1))
         vals.append(s[yi, xi])
     return float(np.mean(vals))
+
 
 def kl_divergence(p_map, q_map):
     p = p_map.astype(np.float64).ravel()
@@ -131,10 +139,12 @@ def kl_divergence(p_map, q_map):
     q = np.clip(q, 1e-12, 1.0)
     return float(np.sum(p * np.log(p / q)))
 
+
 def pearson_map(a, b):
     if a.ravel().std() < 1e-12 or b.ravel().std() < 1e-12:
         return np.nan
     return float(pearsonr(a.ravel(), b.ravel())[0])
+
 
 def auc_judd(saliency, fix_points, num_rand=1000):
     if len(fix_points) == 0:
@@ -144,8 +154,8 @@ def auc_judd(saliency, fix_points, num_rand=1000):
     ths = np.linspace(0, 1, 100)
     fix_mask = np.zeros_like(s, dtype=np.uint8)
     for x, y in fix_points:
-        xi = int(np.clip(x * (s.shape[1]-1), 0, s.shape[1]-1))
-        yi = int(np.clip(y * (s.shape[0]-1), 0, s.shape[0]-1))
+        xi = int(np.clip(x * (s.shape[1] - 1), 0, s.shape[1] - 1))
+        yi = int(np.clip(y * (s.shape[0] - 1), 0, s.shape[0] - 1))
         fix_mask[yi, xi] = 1
     fix_coords = np.column_stack(np.where(fix_mask == 1))
     num_fix = fix_coords.shape[0]
@@ -157,14 +167,15 @@ def auc_judd(saliency, fix_points, num_rand=1000):
     fp = []
     for th in ths:
         bin_map = (s >= th).astype(np.uint8)
-        tpr = bin_map[fix_coords[:,0], fix_coords[:,1]].sum() / float(num_fix)
-        fpr = bin_map[rand_coords[:,0], rand_coords[:,1]].sum() / float(len(rand_coords))
+        tpr = bin_map[fix_coords[:, 0], fix_coords[:, 1]].sum() / float(num_fix)
+        fpr = bin_map[rand_coords[:, 0], rand_coords[:, 1]].sum() / float(len(rand_coords))
         tp.append(tpr)
         fp.append(fpr)
     try:
         return float(auc(fp, tp))
     except:
         return np.nan
+
 
 summary = []
 
@@ -216,7 +227,7 @@ for rec_id in sorted(os.listdir(recordings_dir)):
     metrics["NSS_all_vs_saliency"] = nss_metric(sal_map, fix_points)
     metrics["NSS_waldo_vs_saliency"] = nss_metric(sal_map, waldo_points)
     try:
-        metrics["KL_fixmap_saliency"] = kl_divergence(fix_map+1e-12, sal_map+1e-12)
+        metrics["KL_fixmap_saliency"] = kl_divergence(fix_map + 1e-12, sal_map + 1e-12)
     except:
         metrics["KL_fixmap_saliency"] = np.nan
     try:
@@ -229,9 +240,10 @@ for rec_id in sorted(os.listdir(recordings_dir)):
     pd.DataFrame([metrics]).to_csv(out_csv, index=False)
     summary.append(metrics)
     np.save(os.path.join(out_dir, f"{rec_id}_saliency_map.npy"), sal_map.astype(np.float32))
-    overlay = (sal_map * 255).astype(np.uint8)
-    overlay = cv2.applyColorMap(overlay, cv2.COLORMAP_JET)
-    cv2.imwrite(os.path.join(out_dir, f"{rec_id}_saliency_vis.png"), overlay)
+
+    fig = go.Figure(data=go.Heatmap(z=sal_map, colorscale='Jet'))
+    fig.update_layout(title=f"{rec_id} Saliency Map", width=600, height=600)
+    fig.write_html(os.path.join(out_dir, f"{rec_id}_saliency_vis.html"))
 
 summary_df = pd.DataFrame(summary)
 summary_df.to_csv(os.path.join(out_dir, "saliency_metrics_summary.csv"), index=False)

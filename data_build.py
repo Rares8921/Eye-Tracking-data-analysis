@@ -4,7 +4,8 @@ import pandas as pd
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 from scipy.ndimage import gaussian_filter
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from PIL import Image
 
 recordings_dir = "recordings"
 waldo_dir = "waldo_fixations"
@@ -20,11 +21,13 @@ DBSCAN_MIN_SAMPLES = 2
 TEMPORAL_SCALE = 0.5
 TYPE_SCALE = 0.3
 
+
 def safe_read_csv(path):
     try:
         return pd.read_csv(path)
     except:
         return pd.DataFrame()
+
 
 def make_fixation_map(xs, ys, durations, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_PIX):
     im = np.zeros((h, w), dtype=float)
@@ -42,6 +45,7 @@ def make_fixation_map(xs, ys, durations, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_
         im = im / im.max()
 
     return im
+
 
 def make_kde_map(xs, ys, w=MAP_W, h=MAP_H, bandwidth=KDE_BANDWIDTH):
     if len(xs) == 0:
@@ -65,23 +69,50 @@ def make_kde_map(xs, ys, w=MAP_W, h=MAP_H, bandwidth=KDE_BANDWIDTH):
 
     return dens
 
-def overlay_map_on_image(map_img, image_path, out_path, alpha=0.6, cmap="hot"):
+
+def overlay_map_on_image(map_img, image_path, out_path, alpha=0.6, cmap="Hot"):
     try:
-        import imageio
-        from PIL import Image
+        bg_img = Image.open(image_path)
+        fig = go.Figure()
+        fig.add_layout_image(
+            dict(
+                source=bg_img,
+                xref="x",
+                yref="y",
+                x=0,
+                y=MAP_H,
+                sizex=MAP_W,
+                sizey=MAP_H,
+                sizing="stretch",
+                opacity=1,
+                layer="below"
+            )
+        )
 
-        img = imageio.imread(image_path)
-        bg = Image.fromarray(img).convert("RGBA")
+        fig.add_trace(go.Heatmap(
+            z=map_img,
+            colorscale=cmap,
+            opacity=alpha,
+            showscale=False,
+            hoverinfo='z'
+        ))
 
-        heat = (plt.cm.get_cmap(cmap)(map_img) * 255).astype(np.uint8)
-        heat_img = Image.fromarray(heat).convert("RGBA")
-        heat_img = heat_img.resize(bg.size, resample=Image.BILINEAR)
+        fig.update_xaxes(visible=False, range=[0, MAP_W])
+        fig.update_yaxes(visible=False, range=[0, MAP_H])
 
-        blended = Image.blend(bg, heat_img, alpha=alpha)
-        blended.save(out_path)
+        fig.update_layout(
+            width=MAP_W * 3,
+            height=MAP_H * 3,
+            margin=dict(l=0, r=0, t=0, b=0)
+        )
+
+        html_out = out_path.replace('.png', '.html')
+        fig.write_html(html_out)
         return True
-    except:
+    except Exception as e:
+        print(f"Overlay error: {e}")
         return False
+
 
 for rec_id in os.listdir(recordings_dir):
     rec_path = os.path.join(recordings_dir, rec_id)
@@ -169,32 +200,17 @@ for rec_id in os.listdir(recordings_dir):
     np.save(os.path.join(out_dir, f"{rec_id}_map_kde.npy"), kde_map.astype(np.float32))
     np.save(os.path.join(out_dir, f"{rec_id}_map_waldo.npy"), w_map.astype(np.float32))
 
-    plt.figure(figsize=(6,6))
-    plt.imshow(all_map, origin="lower", cmap="hot", extent=[0,1,0,1])
-    plt.title(f"{rec_id} attention map (all fixations)")
-    plt.axis("off")
-    plt.colorbar(label="normalized intensity")
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, f"{rec_id}_map_all.png"))
-    plt.close()
+    fig_all = go.Figure(data=go.Heatmap(z=all_map, colorscale='Hot'))
+    fig_all.update_layout(title=f"{rec_id} attention map (all fixations)", width=600, height=600)
+    fig_all.write_html(os.path.join(out_dir, f"{rec_id}_map_all.html"))
 
-    plt.figure(figsize=(6,6))
-    plt.imshow(kde_map, origin="lower", cmap="magma", extent=[0,1,0,1])
-    plt.title(f"{rec_id} KDE map (all fixations)")
-    plt.axis("off")
-    plt.colorbar(label="density")
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, f"{rec_id}_map_kde.png"))
-    plt.close()
+    fig_kde = go.Figure(data=go.Heatmap(z=kde_map, colorscale='Magma'))
+    fig_kde.update_layout(title=f"{rec_id} KDE map (all fixations)", width=600, height=600)
+    fig_kde.write_html(os.path.join(out_dir, f"{rec_id}_map_kde.html"))
 
-    plt.figure(figsize=(6,6))
-    plt.imshow(w_map, origin="lower", cmap="inferno", extent=[0,1,0,1])
-    plt.title(f"{rec_id} waldo fixation map")
-    plt.axis("off")
-    plt.colorbar(label="normalized intensity")
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, f"{rec_id}_map_waldo.png"))
-    plt.close()
+    fig_w = go.Figure(data=go.Heatmap(z=w_map, colorscale='Inferno'))
+    fig_w.update_layout(title=f"{rec_id} waldo fixation map", width=600, height=600)
+    fig_w.write_html(os.path.join(out_dir, f"{rec_id}_map_waldo.html"))
 
     if len(w_x) > 0:
         feat = np.vstack([w_x, w_y, t_norm * TEMPORAL_SCALE, types_code * TYPE_SCALE]).T
@@ -243,6 +259,9 @@ for rec_id in os.listdir(recordings_dir):
             break
 
     if image_path:
-        overlay_map_on_image(kde_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_kde.png"), alpha=0.5, cmap="magma")
-        overlay_map_on_image(all_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_all.png"), alpha=0.5, cmap="hot")
-        overlay_map_on_image(w_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_waldo.png"), alpha=0.5, cmap="inferno")
+        overlay_map_on_image(kde_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_kde.png"), alpha=0.5,
+                             cmap="Magma")
+        overlay_map_on_image(all_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_all.png"), alpha=0.5,
+                             cmap="Hot")
+        overlay_map_on_image(w_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_waldo.png"), alpha=0.5,
+                             cmap="Inferno")
