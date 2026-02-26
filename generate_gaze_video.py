@@ -134,33 +134,11 @@ class GazeVideoGenerator:
         return xs_smooth, ys_smooth
     
     def compute_saliency(self, img):
-        if img.ndim == 3:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = img
-        
-        try:
-            sal = cv2.saliency.StaticSaliencySpectralResidual_create()
-            _, salmap = sal.computeSaliency(img)
-            salmap = salmap.astype(np.float32)
-        except:
-            grayf = gray.astype(np.float32)
-            dft = cv2.dft(grayf, flags=cv2.DFT_COMPLEX_OUTPUT)
-            mag, ang = cv2.cartToPolar(dft[:, :, 0], dft[:, :, 1])
-            logmag = np.log(mag + 1e-9)
-            avg = cv2.GaussianBlur(logmag, (3, 3), 0)
-            spectral = logmag - avg
-            exp_spec = np.exp(spectral)
-            salmap = (exp_spec - exp_spec.min()) / (exp_spec.max() - exp_spec.min() + 1e-9)
-        
-        salmap = cv2.resize(salmap, (224, 224))
-        from scipy.ndimage import gaussian_filter
-        salmap = gaussian_filter(salmap, sigma=2)
-        
-        if salmap.max() > 0:
-            salmap = salmap / salmap.max()
-        
-        return salmap.astype(np.float32)
+        """Compute Itti-Koch saliency using the shared module."""
+        from compute_saliency_metrics import compute_itti_koch_saliency
+        img_resized = cv2.resize(img, (224, 224)) if img.shape[:2] != (224, 224) else img
+        saliency, _ = compute_itti_koch_saliency(img_resized)
+        return saliency
     
     def create_center_bias_map(self, size=(224, 224)):
         y, x = np.ogrid[:size[0], :size[1]]

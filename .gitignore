@@ -2,3 +2,6 @@ dataset/train/
 dataset/val/
 **/world.mp4
 gaze_videos/
+/.idea
+/.ipynb_checkpoints
+/__pycache__
