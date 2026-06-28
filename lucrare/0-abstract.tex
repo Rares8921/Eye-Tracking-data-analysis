@@ -1,0 +1,22 @@
+\begin{abstractpage}
+
+\begin{abstract}{romanian}
+În această lucrare am analizat date de \emph{eye-tracking} colectate la \emph{Noaptea Cercetătorilor}, într-un experiment bazat pe jocul \emph{Find Waldo}. Participanții au avut de găsit personajul în mai multe scene, iar privirea lor a fost înregistrată cu un \emph{eye-tracker} Pupil Labs. Spre deosebire de un experiment de laborator, datele au fost obținute într-un mediu public, cu zgomot, întreruperi și diferențe mari între participanți. Din acest motiv, o parte importantă a tezei a fost transformarea înregistrărilor colectate într-un set de date utilizabil, prin segmentare pe niveluri, verificare manuală și filtrarea problemelor apărute în timpul colectării.
+
+Pe baza acestor date, am extras metrici care descriu modul în care participanții caută personajul: timpul până la prima fixație pe Waldo (TTFF), numărul de fixații, acoperirea spațială, entropia privirii, entropia tranzițiilor între zone ale imaginii și raportul fixațiilor pe țintă. Am folosit apoi aceste metrici în două feluri. Mai întâi, am analizat traseele reale ale privirii și le-am comparat cu hărți de \emph{saliency}, ca să verific dacă participanții urmăresc zonele evidente sau dacă își controlează căutarea în funcție de scopul jocului. După aceea, am folosit aceleași caracteristici în modele precum: regresie logistică, rețele MLP, o arhitectură BiLSTM cu mecanism de atenție și un model Markov de ordinul întâi pentru predicția următoarei zone privite.
+
+Rezultatele arată că, în această sarcină, privirea nu este explicată suficient de elementele vizuale evidente din imagine. Participanții ignoră frecvent zonele puternic colorate dacă acestea nu ajută la găsirea personajului, ceea ce susține ideea unei căutări orientate pe scop. În același timp, analiza diferențelor individuale arată că participanții păstrează tipare proprii de explorare, vizibile în ritmul fixațiilor, acoperirea spațială și entropia traseului vizual, chiar și după ce ținem cont de dificultatea fiecărui nivel. Pentru partea de predicție, modelele simple au fost mai stabile pe setul de date disponibil, în timp ce modelele mai complexe au fost mai sensibile la dimensiunea redusă a datelor și la zgomotul din înregistrări.
+\end{abstract}
+
+\newpage
+
+\begin{abstract}{english}
+This thesis analyzes eye-tracking data collected during Researchers' Night, in an experiment based on the Find Waldo game. Participants had to find the character in several scenes, while their gaze was recorded with a Pupil Labs eye-tracker. Unlike a laboratory experiment, the data was collected in a public setting, with noise, interruptions, and large differences between participants. For this reason, a significant part of the thesis was turning the collected recordings into a usable dataset, through level segmentation, manual validation, and filtering of the problems that appeared during data collection.
+
+From these recordings, I extracted metrics such as time to first fixation on Waldo, number of fixations, spatial coverage, gaze entropy, transition entropy, and the proportion of fixations on the target. I used these metrics first to study how participants searched the images, and then as input features for predictive models. I also compared gaze paths against saliency maps to check whether participants were drawn to visually prominent regions or whether they guided their search more systematically toward the target. For modeling, I tested classical models like logistic regression, MLP networks, a BiLSTM architecture with an attention mechanism, and a first-order Markov model for predicting the next region a participant would look at.
+
+The results suggest that gaze behavior in this task is not explained well by visual saliency alone. Participants often ignored visually strong regions when they were not useful for finding Waldo, which points to search being driven more by the goal of finding the character than by bottom-up visual reflexes. The data also showed individual differences between participants, especially in fixation rhythm, spatial coverage, and gaze-path entropy, and these differences remained visible even after controlling for level difficulty. For prediction, simpler models such as logistic regression and Markov chains were more stable than more complex neural models, likely because the dataset was small and noisy.
+
+\end{abstract}
+
+\end{abstractpage}

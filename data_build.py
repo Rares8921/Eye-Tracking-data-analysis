@@ -1,35 +1,24 @@
 import os
 import numpy as np
 import pandas as pd
+import cv2
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 from scipy.ndimage import gaussian_filter
-import plotly.graph_objects as go
-from PIL import Image
 
-recordings_dir = "recordings"
-waldo_dir = "waldo_fixations"
-out_dir = "attention_maps"
-os.makedirs(out_dir, exist_ok=True)
-
-MAP_W = 224
-MAP_H = 224
-GAUSSIAN_SIGMA_PIX = 6
-KDE_BANDWIDTH = 0.04
-DBSCAN_EPS = 0.06
-DBSCAN_MIN_SAMPLES = 2
-TEMPORAL_SCALE = 0.5
-TYPE_SCALE = 0.3
+from utils import (
+    ATTENTION_MAPS_DIR,
+    DATASET_IMAGES_DIR,
+    RECORDINGS_DIR,
+    waldo_coords as WALDO_BOXES,
+    WALDO_DIR,
+    recordings as WALDO_INTERVALS,
+    waldo_levels as WALDO_TO_IMAGE,
+    add_relative_time_columns
+)
 
 
-def safe_read_csv(path):
-    try:
-        return pd.read_csv(path)
-    except:
-        return pd.DataFrame()
-
-
-def make_fixation_map(xs, ys, durations, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_PIX):
+def make_fixation_map(xs, ys, durations, w=224, h=224, sigma=6):
     im = np.zeros((h, w), dtype=float)
     if len(xs) == 0:
         return im
@@ -42,21 +31,18 @@ def make_fixation_map(xs, ys, durations, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_
 
     im = gaussian_filter(im, sigma=sigma)
     if im.max() > 0:
-        im = im / im.max()
-
+        im /= im.max()
     return im
 
 
-def make_kde_map(xs, ys, w=MAP_W, h=MAP_H, bandwidth=KDE_BANDWIDTH):
+def make_kde_map(xs, ys, w=224, h=224, bandwidth=0.04):
     if len(xs) == 0:
         return np.zeros((h, w))
 
     xy = np.vstack([xs, ys]).T
-    kde = KernelDensity(bandwidth=bandwidth, kernel="gaussian")
-    kde.fit(xy)
+    kde = KernelDensity(bandwidth=bandwidth, kernel="gaussian").fit(xy)
 
-    gx = np.linspace(0, 1, w)
-    gy = np.linspace(0, 1, h)
+    gx, gy = np.linspace(0, 1, w), np.linspace(0, 1, h)
     X, Y = np.meshgrid(gx, gy)
     sample_grid = np.vstack([X.ravel(), Y.ravel()]).T
 
@@ -65,203 +51,207 @@ def make_kde_map(xs, ys, w=MAP_W, h=MAP_H, bandwidth=KDE_BANDWIDTH):
     dens = gaussian_filter(dens, sigma=2)
 
     if dens.max() > 0:
-        dens = dens / dens.max()
-
+        dens /= dens.max()
     return dens
 
 
-def overlay_map_on_image(map_img, image_path, out_path, alpha=0.6, cmap="Hot"):
-    try:
-        bg_img = Image.open(image_path)
-        fig = go.Figure()
-        fig.add_layout_image(
-            dict(
-                source=bg_img,
-                xref="x",
-                yref="y",
-                x=0,
-                y=MAP_H,
-                sizex=MAP_W,
-                sizey=MAP_H,
-                sizing="stretch",
-                opacity=1,
-                layer="below"
-            )
+def draw_scale_bar(orig_h, orig_w, cmap_cv):
+    bar_w = int(orig_w * 0.02)
+    text_w = int(orig_w * 0.05)
+    scale_img = np.full((orig_h, bar_w + text_w, 3), 30, dtype=np.uint8)
+
+    gradient = np.linspace(255, 0, orig_h).astype(np.uint8)
+    gradient = np.repeat(gradient[:, np.newaxis], bar_w, axis=1)
+    scale_img[:, :bar_w] = cv2.applyColorMap(gradient, cmap_cv)
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = max(0.5, orig_h / 1000.0)
+    cv2.putText(scale_img, "Max", (bar_w + 5, int(orig_h * 0.05)), font, font_scale, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(scale_img, "Min", (bar_w + 5, int(orig_h * 0.98)), font, font_scale, (255, 255, 255), 2, cv2.LINE_AA)
+
+    return scale_img
+
+
+def overlay_map_high_res(map_img, resolved_path, out_path, alpha=0.5, cmap_cv=cv2.COLORMAP_JET):
+    if not resolved_path:
+        return
+    bg_img = cv2.imread(resolved_path)
+    if bg_img is None:
+        return
+
+    orig_h, orig_w = bg_img.shape[:2]
+    map_resized = cv2.resize(map_img, (orig_w, orig_h), interpolation=cv2.INTER_CUBIC)
+    map_uint8 = (map_resized * 255).astype(np.uint8)
+
+    heatmap = cv2.applyColorMap(map_uint8, cmap_cv)
+    mask = map_uint8 > 2
+
+    overlay = bg_img.copy()
+    blended = cv2.addWeighted(bg_img, 1 - alpha, heatmap, alpha, 0)
+    overlay[mask] = blended[mask]
+
+    scale_img = draw_scale_bar(orig_h, orig_w, cmap_cv)
+    final_img = np.hstack((overlay, scale_img))
+
+    cv2.imwrite(out_path, final_img)
+
+
+def process_clusters(features, xs, ys, durations, eps, min_samples):
+    if len(features) < min_samples:
+        return np.full(len(xs), -1), pd.DataFrame()
+
+    labels = DBSCAN(eps=eps, min_samples=min_samples).fit(features).labels_
+
+    clusters_data = []
+    for lab in np.unique(labels):
+        if lab == -1:
+            continue
+        mask = labels == lab
+        clusters_data.append({
+            "cluster": int(lab),
+            "centroid_x": float(xs[mask].mean()),
+            "centroid_y": float(ys[mask].mean()),
+            "n_fixations": int(mask.sum()),
+            "sum_duration_s": float(durations[mask].sum())
+        })
+
+    return labels, pd.DataFrame(clusters_data)
+
+
+if __name__ == "__main__":
+    os.makedirs(str(ATTENTION_MAPS_DIR), exist_ok=True)
+
+    for rec_id in os.listdir(str(RECORDINGS_DIR)):
+        rec_path = os.path.join(str(RECORDINGS_DIR), rec_id)
+        if not os.path.isdir(rec_path):
+            continue
+
+        fix_file = os.path.join(rec_path, "fixations_on_surface_Surface 1.csv")
+        waldo_file = os.path.join(str(WALDO_DIR), f"waldo_fixations_{rec_id}.csv")
+
+        if not os.path.exists(fix_file):
+            continue
+
+        full_fix_df = pd.read_csv(fix_file)
+        if full_fix_df.empty:
+            continue
+
+        full_waldo_df = pd.read_csv(waldo_file) if os.path.exists(waldo_file) else pd.DataFrame()
+
+        add_relative_time_columns(
+            full_fix_df,
+            start_col="start timestamp [ns]",
+            end_col="end timestamp [ns]",
+            duration_col="duration [ms]"
         )
 
-        fig.add_trace(go.Heatmap(
-            z=map_img,
-            colorscale=cmap,
-            opacity=alpha,
-            showscale=False,
-            hoverinfo='z'
-        ))
+        rec_out_dir = os.path.join(str(ATTENTION_MAPS_DIR), rec_id)
+        os.makedirs(rec_out_dir, exist_ok=True)
 
-        fig.update_xaxes(visible=False, range=[0, MAP_W])
-        fig.update_yaxes(visible=False, range=[0, MAP_H])
+        intervals = WALDO_INTERVALS.get(rec_id, [])
+        for aoi_name, start_s, end_s in intervals:
+            base_out_path = os.path.join(rec_out_dir, f"{rec_id}_{aoi_name}")
+            img_filename = WALDO_TO_IMAGE.get(aoi_name, "")
 
-        fig.update_layout(
-            width=MAP_W * 3,
-            height=MAP_H * 3,
-            margin=dict(l=0, r=0, t=0, b=0)
-        )
+            resolved_img_path = os.path.join(str(DATASET_IMAGES_DIR), img_filename)
+            if not os.path.exists(resolved_img_path):
+                resolved_img_path = resolved_img_path.replace('.png', '.jpg')
+                if not os.path.exists(resolved_img_path):
+                    resolved_img_path = ""
 
-        html_out = out_path.replace('.png', '.html')
-        fig.write_html(html_out)
-        return True
-    except Exception as e:
-        print(f"Overlay error: {e}")
-        return False
-
-
-for rec_id in os.listdir(recordings_dir):
-    rec_path = os.path.join(recordings_dir, rec_id)
-    if not os.path.isdir(rec_path):
-        continue
-
-    fix_file = os.path.join(rec_path, "fixations_on_surface_Surface 1.csv")
-    waldo_file = os.path.join(waldo_dir, f"waldo_fixations_{rec_id}.csv")
-
-    fix_df = safe_read_csv(fix_file)
-    waldo_df = safe_read_csv(waldo_file)
-
-    if fix_df.empty and waldo_df.empty:
-        continue
-
-    if not fix_df.empty:
-        if "fixation x [normalized]" in fix_df.columns and "fixation y [normalized]" in fix_df.columns:
-            fix_x = fix_df["fixation x [normalized]"].to_numpy(dtype=float)
-            fix_y = fix_df["fixation y [normalized]"].to_numpy(dtype=float)
-            if "duration [ms]" in fix_df.columns:
-                fix_dur = fix_df["duration [ms]"].to_numpy(dtype=float) / 1000.0
+            if resolved_img_path:
+                ref_img_hd = cv2.imread(resolved_img_path)
             else:
-                fix_dur = np.ones_like(fix_x, dtype=float) * 0.2
-        else:
-            fix_x = np.array([])
-            fix_y = np.array([])
-            fix_dur = np.array([])
-    else:
-        fix_x = np.array([])
-        fix_y = np.array([])
-        fix_dur = np.array([])
+                ref_img_hd = np.zeros((1080, 1920, 3), dtype=np.uint8)
 
-    if not waldo_df.empty:
-        if "x" in waldo_df.columns and "y" in waldo_df.columns:
-            w_x = waldo_df["x"].to_numpy(dtype=float)
-            w_y = waldo_df["y"].to_numpy(dtype=float)
-        elif "fixation x [normalized]" in waldo_df.columns and "fixation y [normalized]" in waldo_df.columns:
-            w_x = waldo_df["fixation x [normalized]"].to_numpy(dtype=float)
-            w_y = waldo_df["fixation y [normalized]"].to_numpy(dtype=float)
-        else:
-            w_x = np.array([])
-            w_y = np.array([])
+            cv2.imwrite(f"{base_out_path}_reference.png", ref_img_hd)
 
-        if "duration_ms" in waldo_df.columns:
-            w_dur = waldo_df["duration_ms"].to_numpy(dtype=float) / 1000.0
-        elif "duration [ms]" in waldo_df.columns:
-            w_dur = waldo_df["duration [ms]"].to_numpy(dtype=float) / 1000.0
-        else:
-            w_dur = np.ones_like(w_x, dtype=float) * 0.2
+            mask_fix = (full_fix_df["start_s"] >= start_s) & (full_fix_df["start_s"] <= end_s)
+            fix_df = full_fix_df[mask_fix].copy()
 
-        if "timestamp_s" in waldo_df.columns:
-            t = waldo_df["timestamp_s"].to_numpy(dtype=float)
-        elif "start_s" in waldo_df.columns:
-            t = waldo_df["start_s"].to_numpy(dtype=float)
-        else:
-            t = np.arange(len(w_x), dtype=float)
+            fix_x = fix_df["fixation x [normalized]"].to_numpy(
+                dtype=float) if "fixation x [normalized]" in fix_df.columns else np.array([])
+            fix_y = fix_df["fixation y [normalized]"].to_numpy(
+                dtype=float) if "fixation y [normalized]" in fix_df.columns else np.array([])
+            fix_dur = fix_df["duration [ms]"].to_numpy(
+                dtype=float) / 1000.0 if "duration [ms]" in fix_df.columns else np.full(len(fix_x), 0.2)
 
-        if t.max() > 0:
-            t_norm = (t - t.min()) / (t.max() - t.min())
-        else:
-            t_norm = np.zeros_like(t)
+            waldo_df = pd.DataFrame()
+            if not full_waldo_df.empty and "waldo" in full_waldo_df.columns:
+                waldo_df = full_waldo_df[full_waldo_df["waldo"] == aoi_name].copy()
 
-        if "type" in waldo_df.columns:
-            types = waldo_df["type"].astype(str).to_numpy()
-            types_code = np.array([0 if s.lower().strip().startswith("direct") else 1 for s in types], dtype=float)
-        else:
-            types_code = np.zeros_like(w_x, dtype=float)
+            w_x, w_y, w_dur = np.array([]), np.array([]), np.array([])
+            if not waldo_df.empty:
+                x_col = "x" if "x" in waldo_df.columns else "fixation x [normalized]"
+                y_col = "y" if "y" in waldo_df.columns else "fixation y [normalized]"
+                dur_col = "duration_ms" if "duration_ms" in waldo_df.columns else "duration [ms]"
+                t_col = "timestamp_s" if "timestamp_s" in waldo_df.columns else "start_s"
 
-    else:
-        w_x = np.array([])
-        w_y = np.array([])
-        w_dur = np.array([])
-        t_norm = np.array([])
-        types_code = np.array([])
+                w_x = waldo_df[x_col].to_numpy(dtype=float)
+                w_y = waldo_df[y_col].to_numpy(dtype=float)
+                w_dur = waldo_df[dur_col].to_numpy(dtype=float) / 1000.0 if dur_col in waldo_df.columns else np.full(
+                    len(w_x), 0.2)
 
-    combined_x = np.concatenate([fix_x, w_x])
-    combined_y = np.concatenate([fix_y, w_y])
-    combined_dur = np.concatenate([fix_dur, w_dur])
+                t = waldo_df[t_col].to_numpy(dtype=float) if t_col in waldo_df.columns else np.arange(len(w_x),
+                                                                                                      dtype=float)
+                t_norm = (t - t.min()) / (t.max() - t.min()) if len(t) > 0 and t.max() > t.min() else np.zeros_like(t)
 
-    all_map = make_fixation_map(combined_x, combined_y, combined_dur, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_PIX)
-    kde_map = make_kde_map(combined_x, combined_y, w=MAP_W, h=MAP_H, bandwidth=KDE_BANDWIDTH)
-    w_map = make_fixation_map(w_x, w_y, w_dur, w=MAP_W, h=MAP_H, sigma=GAUSSIAN_SIGMA_PIX)
+                types_code = np.zeros_like(w_x, dtype=float)
+                if "type" in waldo_df.columns:
+                    types_code = np.array(
+                        [0 if str(s).lower().strip().startswith("direct") else 1 for s in waldo_df["type"]],
+                        dtype=float)
 
-    np.save(os.path.join(out_dir, f"{rec_id}_map_all.npy"), all_map.astype(np.float32))
-    np.save(os.path.join(out_dir, f"{rec_id}_map_kde.npy"), kde_map.astype(np.float32))
-    np.save(os.path.join(out_dir, f"{rec_id}_map_waldo.npy"), w_map.astype(np.float32))
+                feat = np.vstack([w_x, w_y, t_norm * 0.2, types_code * 0.1]).T
+                labels, stats_df = process_clusters(feat, w_x, w_y, w_dur, 0.15, 2)
 
-    fig_all = go.Figure(data=go.Heatmap(z=all_map, colorscale='Hot'))
-    fig_all.update_layout(title=f"{rec_id} attention map (all fixations)", width=600, height=600)
-    fig_all.write_html(os.path.join(out_dir, f"{rec_id}_map_all.html"))
+                waldo_df["cluster"] = labels
+                waldo_df.to_csv(f"{base_out_path}_waldo_clusters.csv", index=False)
+                stats_df.to_csv(f"{base_out_path}_waldo_cluster_stats.csv", index=False)
+            else:
+                pd.DataFrame().to_csv(f"{base_out_path}_waldo_clusters.csv", index=False)
+                pd.DataFrame().to_csv(f"{base_out_path}_waldo_cluster_stats.csv", index=False)
 
-    fig_kde = go.Figure(data=go.Heatmap(z=kde_map, colorscale='Magma'))
-    fig_kde.update_layout(title=f"{rec_id} KDE map (all fixations)", width=600, height=600)
-    fig_kde.write_html(os.path.join(out_dir, f"{rec_id}_map_kde.html"))
+            if not fix_df.empty and aoi_name in WALDO_BOXES:
+                x_min, y_min, x_max, y_max = WALDO_BOXES[aoi_name]
+                margin = 0.0125
+                x_min_p, x_max_p = max(0.0, x_min - margin), min(1.0, x_max + margin)
+                y_min_p, y_max_p = max(0.0, y_min - margin), min(1.0, y_max + margin)
 
-    fig_w = go.Figure(data=go.Heatmap(z=w_map, colorscale='Inferno'))
-    fig_w.update_layout(title=f"{rec_id} waldo fixation map", width=600, height=600)
-    fig_w.write_html(os.path.join(out_dir, f"{rec_id}_map_waldo.html"))
+                distractor_mask = ~((fix_x >= x_min_p) & (fix_x <= x_max_p) & (fix_y >= y_min_p) & (fix_y <= y_max_p))
+                distractor_df = fix_df.loc[distractor_mask].copy()
 
-    if len(w_x) > 0:
-        feat = np.vstack([w_x, w_y, t_norm * TEMPORAL_SCALE, types_code * TYPE_SCALE]).T
+                if not distractor_df.empty:
+                    d_x = distractor_df["fixation x [normalized]"].to_numpy(dtype=float)
+                    d_y = distractor_df["fixation y [normalized]"].to_numpy(dtype=float)
+                    d_dur = distractor_df["duration [ms]"].to_numpy(dtype=float) / 1000.0
 
-        if len(feat) >= 2:
-            clustering = DBSCAN(eps=DBSCAN_EPS, min_samples=DBSCAN_MIN_SAMPLES).fit(feat)
-            labels = clustering.labels_
-        else:
-            labels = np.array([-1] * len(w_x))
+                    feat = np.vstack([d_x, d_y]).T
+                    labels, stats_df = process_clusters(feat, d_x, d_y, d_dur, 0.05, 2)
 
-        waldo_df["cluster"] = labels
+                    distractor_df["cluster"] = labels
+                    distractor_df.to_csv(f"{base_out_path}_distractor_clusters.csv", index=False)
+                    stats_df.to_csv(f"{base_out_path}_distractor_cluster_stats.csv", index=False)
+                else:
+                    pd.DataFrame().to_csv(f"{base_out_path}_distractor_clusters.csv", index=False)
+                    pd.DataFrame().to_csv(f"{base_out_path}_distractor_cluster_stats.csv", index=False)
+            else:
+                pd.DataFrame().to_csv(f"{base_out_path}_distractor_clusters.csv", index=False)
+                pd.DataFrame().to_csv(f"{base_out_path}_distractor_cluster_stats.csv", index=False)
 
-        clusters = []
-        for lab in np.unique(labels):
-            if lab == -1:
-                continue
-            mask = labels == lab
-            cx = w_x[mask].mean()
-            cy = w_y[mask].mean()
-            total_d = w_dur[mask].sum()
-            nfix = mask.sum()
-            clusters.append({
-                "cluster": int(lab),
-                "centroid_x": float(cx),
-                "centroid_y": float(cy),
-                "n_fixations": int(nfix),
-                "sum_duration_s": float(total_d)
-            })
+            all_map = make_fixation_map(fix_x, fix_y, fix_dur)
+            kde_map = make_kde_map(fix_x, fix_y)
+            w_map = make_fixation_map(w_x, w_y, w_dur)
 
-        clusters_df = pd.DataFrame(clusters)
+            np.save(f"{base_out_path}_map_all.npy", all_map.astype(np.float32))
+            np.save(f"{base_out_path}_map_kde.npy", kde_map.astype(np.float32))
+            np.save(f"{base_out_path}_map_waldo.npy", w_map.astype(np.float32))
 
-        waldo_df.to_csv(os.path.join(out_dir, f"{rec_id}_waldo_clusters.csv"), index=False)
-        clusters_df.to_csv(os.path.join(out_dir, f"{rec_id}_waldo_cluster_stats.csv"), index=False)
+            overlay_map_high_res(kde_map, resolved_img_path, f"{base_out_path}_overlay_kde.png",
+                                 cmap_cv=cv2.COLORMAP_MAGMA)
+            overlay_map_high_res(all_map, resolved_img_path, f"{base_out_path}_overlay_all.png",
+                                 cmap_cv=cv2.COLORMAP_HOT)
+            overlay_map_high_res(w_map, resolved_img_path, f"{base_out_path}_overlay_waldo.png",
+                                 cmap_cv=cv2.COLORMAP_INFERNO)
 
-    else:
-        pd.DataFrame().to_csv(os.path.join(out_dir, f"{rec_id}_waldo_clusters.csv"), index=False)
-        pd.DataFrame().to_csv(os.path.join(out_dir, f"{rec_id}_waldo_cluster_stats.csv"), index=False)
-
-    image_candidates = ["image.png", "surface_image.png", "frame.png"]
-    image_path = None
-
-    for nm in image_candidates:
-        p = os.path.join(rec_path, nm)
-        if os.path.exists(p):
-            image_path = p
-            break
-
-    if image_path:
-        overlay_map_on_image(kde_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_kde.png"), alpha=0.5,
-                             cmap="Magma")
-        overlay_map_on_image(all_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_all.png"), alpha=0.5,
-                             cmap="Hot")
-        overlay_map_on_image(w_map, image_path, os.path.join(out_dir, f"{rec_id}_overlay_waldo.png"), alpha=0.5,
-                             cmap="Inferno")
+    print("Data building complet!")

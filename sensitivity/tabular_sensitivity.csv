@@ -1,0 +1,9 @@
+scenario,family,task,best_model,balanced_accuracy,n_samples
+all_data,tabular,label_found_waldo,logreg_torch,0.7052785923753666,42
+all_data,tabular,label_long_search,logreg_torch,0.6931818181818181,42
+drop_zero_fix_levels,tabular,label_found_waldo,logreg_torch,0.6720430107526881,40
+drop_zero_fix_levels,tabular,label_long_search,mlp_torch,0.75,40
+drop_quality_flagged_participants,tabular,label_found_waldo,mlp_torch,0.6743295019157088,38
+drop_quality_flagged_participants,tabular,label_long_search,mlp_torch,0.8416666666666667,38
+drop_both,tabular,label_found_waldo,mlp_torch,0.6743295019157088,38
+drop_both,tabular,label_long_search,mlp_torch,0.8416666666666667,38

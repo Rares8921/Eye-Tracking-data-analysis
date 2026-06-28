@@ -1,0 +1,258 @@
+\section{Pregătirea experimentului}
+
+O parte importantă a proiectului a constat în pregătirea efectivă a experimentului pentru Noaptea Cercetătorilor. Împreună cu echipa, am configurat \emph{setup}-ul și am selectat imaginile pentru nivelurile jocului. După alegerea scenelor, ne-am concentrat pe testarea întregului sistem pentru a ne asigura că funcționează corect. Concret, am verificat dacă \emph{eye-tracker}-ul înregistrează și transmite datele corect către sistem, dacă funcționează toate ecranele și dacă publicul poate urmări statisticile în timp real. Pentru că așteptam mulți participanți și timpul era limitat, interacțiunea trebuia să fie simplă: participantul să poată începe jocul rapid, fără explicații lungi.
+
+Modul în care am desfășurat experimentul se observă direct în datele obținute, atât prin avantaje, cât și prin limitări. Avantajul principal este că am colectat date de la un public divers, într-un mediu real. Pe de altă parte, agitația de la eveniment a adus și zgomot în înregistrări: unii participanți au făcut mișcări bruște, au mai existat întreruperi, iar calibrarea \emph{eye-tracker}-ului a trebuit refăcută de mai multe ori pentru anumite persoane. Prin urmare, aceste probleme au trebuit să fie tratate ulterior, într-o etapă separată de curățare și preprocesare a datelor.
+
+La nivel practic, am urmărit recomandările din studiile de \emph{eye-tracking} \cite{duchowski2017} și am pus la punct câteva detalii legate de \emph{setup}, pentru a obține înregistrări cât mai bune. Am urmărit menținerea unei distanțe constante între participant și monitor. Acest lucru este esențial nu doar pentru acuratețea datelor înregistrate de \emph{eye-tracker} \cite{duchowski2017}, ci mai ales pentru ca markerele lipite pe colțurile ecranului să rămână constant vizibile pe filmare, un pas obligatoriu în delimitarea corectă a regiunii de interes (ROI). De asemenea, pentru a evita oboseala, mai ales că o bună parte din public era formată din copii, am limitat timpul de joc și numărul de imagini pe care le parcurgea o singură persoană. Practic, am încercat să creăm un mediu de colectare cât mai stabil, care să compenseze pe cât posibil lipsa condițiilor de laborator.
+
+\begin{figure}[htbp]
+	\centering
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{poza_lucru_echipa.png}
+		\caption{Pregătirea experimentului}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{poza_eveniment.png}
+		\caption{Colectarea datelor la eveniment}
+	\end{subfigure}
+	\caption{Cadre surprinse în timpul pregătirii și desfășurării evenimentului.}
+	\label{fig:event-setup}
+\end{figure}
+
+În final, am obținut consimțământul participanților care au fost de acord cu folosirea și prelucrarea ulterioară a datelor în mod anonimizat. Figura~\ref{fig:event-setup} ilustrează atât etapa de pregătire a experimentului, cât și desfășurarea colectării în cadrul evenimentului.
+
+\section{Construirea setului de date}
+
+Primul pas în obținerea setului de date a fost filtrarea înregistrărilor pe baza consimțământului, în urma căreia am reținut 11 participanți dintr-un total de 35 care au jucat inițial. Cum fiecare persoană a jucat toate cele 4 niveluri, au rezultat în total 44 de secvențe de date de joc. Următoarea etapă a constat în prelucrarea acestor înregistrări. Mai întâi, am determinat dimensiunile imaginilor aferente fiecărui nivel prin raportarea la regiunea delimitată de markerele de pe ecran. Folosind această mapare, am corectat și recalculat metricile extrase din datele \emph{eye-tracker}-ului Pupil Labs Neon \cite{pupillabsneon}.
+
+Mai departe, a trebuit să extragem datele relevante. Am delimitat \emph{timestamp}-urile de început și de sfârșit pentru fiecare nivel în parte, astfel încât intervalul să corespundă cât mai bine timpului efectiv de joc. În cadrul acestor intervale, am făcut o verificare suplimentară: ori de câte ori participantul privea în afara scenei, acea porțiune de date a fost eliminată, iar în analiză au fost păstrate doar momentele în care participantul era atent la joc. Ultimul pas a fost marcarea coordonatelor personajului la fiecare nivel, lucru care ne ajută să știm precis dacă și când a fost găsit.
+
+Astfel, la finalul acestui proces de curățare, am obținut structura finală a setului de date: avem 11 participanți cu vârste cuprinse între 5 și 20 de ani (mai exact, 6 copii, 4 adolescenți și un singur adult), care au generat acele 44 de secvențe de-a lungul celor 4 niveluri jucate.
+
+Chiar dacă aceste date permit o analiză statistică a modului în care au reacționat participanții la fiecare nivel, trebuie luate în considerare și limitările. Numărul mic de secvențe și distribuția dezechilibrată a vârstelor arată că nu avem un volum suficient de date pentru a antrena de la zero modele complexe de \emph{Machine Learning}.
+
+\section{Preprocesare și analiza exploratorie a datelor}
+
+Pentru a transforma înregistrările într-un format utilizabil în analiză, procesarea a urmărit două direcții principale.
+
+Prima s-a concentrat pe evaluarea interacțiunilor vizuale cu personajul. Mai exact, analizând fixațiile din intervalele de timp ale fiecărui nivel, am urmărit să identificăm momentele în care privirea a intersectat regiunea de interes (Waldo). Am delimitat exact zona (\emph{bounding box}) pentru personaj, iar intersecțiile directe au fost marcate ca atare. Pentru a capta și contactul periferic (momentele în care participantul se uita fix lângă personaj, dar nu direct pe el), am extins această zonă cu o marjă suplimentară de 1.25\% pe toate axele coordonatelor normalizate.
+
+Mai departe, am preluat aceste fixații, alături de celelalte date, pentru a construi un set extins de caracteristici pentru fiecare nivel. Obiectivul aici nu a fost doar să măsurăm performanța, ci să cuantificăm modul în care participanții au explorat imaginea. Astfel, pe lângă metricile standard (cum ar fi durata de joc, numărul total de fixații sau timpul până la prima fixare pe Waldo), am extras și \emph{timpul de verificare} (câte secunde a continuat participantul să analizeze personajul după ce l-a observat prima oară, pentru a-și confirma decizia). În plus, am vrut să vedem cât de lung a fost traseul vizual (însumând distanțele euclidiene ale tuturor sacadelor) și ce suprafață totală a acoperit. Pentru distribuția fixațiilor, am calculat aria \emph{Convex Hull} și dispersia pe axele $x$ și $y$. De asemenea, pentru a face diferența între o căutare organizată și una haotică, am măsurat cât de împrăștiate au fost fixațiile (entropia spațială) și cât de previzibil a fost traseul privirii dintr-o zonă în alta a ecranului (entropia de tranziție). La finalul acestei etape de calcul am obținut tabela completă de date pe care s-au bazat analizele ulterioare.
+
+Pentru a măsura cât de împrăștiată a fost privirea pe parcursul căutării (entropia spațială pe zone) și cât de previzibile au fost trecerile dintr-o zonă în alta (entropia de tranziție), am împărțit ecranul în 16 zone egale (într-un format de $4 \times 4$). Am mers pe această variantă pentru că arată acele părți dintr-o imagine care au captat atenția, dar ne și asigură că fiecare parte strânge suficiente fixații pentru a avea un calcul valid. Dacă am fi tăiat ecranul în bucăți mai mici, am fi avut multe zone complet goale, ceea ce ar fi făcut rezultatele instabile, mai ales având în vedere numărul restrâns de participanți. 
+
+Pentru această împărțire, am calculat, pe baza abordării lui Shannon \cite{shannon1948}, entropia spațială astfel:
+$$H_s = - \sum_k p_k \log_2 p_k$$
+unde $p_k$ reprezintă proporția de fixații care aparțin zonei $k$. Mai departe, pentru a vedea cât de ușor este să anticipezi traseul privirii dintr-o zonă în alta (o numim entropia de tranziție), am folosit probabilitățile condiționate:
+$$H_t = - \sum_i p(i) \sum_j p(j \mid i)\log_2 p(j \mid i)$$
+Pentru a calcula timpul până la prima fixație pe Waldo, am folosit diferența dintre \emph{timestamps} înregistrate:
+$$\mathrm{TTFF} = t_{\text{prima fixație pe Waldo}} - t_{\text{început nivel}}$$
+
+O fixație este considerată pe Waldo dacă punctul ei se află în zona extinsă (cu marja de 1.25\%). Astfel, măsurăm primul contact vizual cu Waldo, inclusiv cel periferic, și nu neapărat momentul în care participantul recunoaște personajul. Acest lucru explică de ce, la nivelurile grele, căutarea continuă zeci de secunde după prima înregistrare a privirii pe țintă.
+
+Dincolo de aceste calcule numerice, am folosit algoritmul \emph{DBSCAN} \cite{ester1996dbscan} pentru a identifica zonele în care fixațiile s-au concentrat repetat. Am extras două tipuri de clustere: unele asociate contactului cu Waldo și altele aflate în afara zonei personajului. Folosesc aceste clustere doar pentru a verifica etapa de preprocesare, fără ca ele să devină un rezultat separat de modelare.
+
+%Pentru fixațiile pe Waldo nu am folosit doar poziția spațială, ci un vector de trăsături 4D ($\epsilon = %0.15$), format din coordonatele normalizate ($x, y$), timpul normalizat (scalat cu 0.2) și tipul de %contact direct/periferic (scalat cu 0.1). Astfel, am putut separa momentele de verificare a personajului %de zonele care au atras atenția în mod neproductiv.
+
+Prima observație din rezultate este că nivelurile diferă ca dificultate. Așa cum arată mediile din Tabela~\ref{tab:level-summary}, \texttt{waldo\_1} este cel mai solicitant ca durată medie, de peste 100 de secunde, în timp ce \texttt{waldo\_2} este rezolvat, în medie, în doar 10 secunde. Totuși, dacă privim strict timpul până la prima fixație, \texttt{waldo\_3} are cel mai mare timp (30.69~s față de 24.92~s). Asta arată că \texttt{waldo\_3} este cel mai greu de localizat inițial, chiar dacă, odată reperat, este confirmat mult mai rapid. Testele ANOVA pe duratele log-transformate susțin această diferență între niveluri, atât pentru timpul total de căutare ($p \approx 5.8 \times 10^{-6}$), cât și pentru timpul până la prima fixație pe Waldo ($p \approx 0.00295$). Această dificultate este vizibilă și în metrica \emph{Raport Waldo} în tabel. Metrica arată proporția fixațiilor care s-au aflat direct pe personaj din numărul total de fixații înregistrate pe durata nivelului. La nivelul ușor, peste 15\% din fixațiile jucătorilor ajung direct pe personaj. La nivelul dificil, raportul scade la aproximativ 3.5\%, ceea ce sugerează că participanții petrec relativ puțin timp fixând direct personajul și explorează mai mult restul imaginii.
+
+\begin{table}[H]
+	\centering
+	\footnotesize
+	\setlength{\tabcolsep}{3.6pt}
+	\caption{Rezumat pe nivel pentru metricile analizei exploratorii.}
+	\label{tab:level-summary}
+	\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrrrr@{}}
+		\toprule
+		Nivel & Durată medie (s) & TTFF mediu (s) & Entropia privirii & Entropie tranziții & Raport Waldo \\
+		\midrule
+		\texttt{waldo\_1} & 108.26 & 24.92 & 7.33 & 1.65 & 0.035 \\
+		\texttt{waldo\_2} & 10.15 & 3.15 & 4.88 & 0.93 & 0.155 \\
+		\texttt{waldo\_3} & 40.58 & 30.69 & 5.95 & 1.26 & 0.033 \\
+		\texttt{waldo\_4} & 26.73 & 4.65 & 4.72 & 1.12 & 0.106 \\
+		\bottomrule
+	\end{tabular*}
+\end{table}
+
+De asemenea, o entropie de tranziție aproape dublă la primul nivel sugerează că traseul privirii devine mai variabil între zone atunci când personajul nu este găsit rapid.
+
+Mergând mai departe la corelații (Figura~\ref{fig:correlation-heatmap} și Tabela~\ref{tab:correlations}), evaluate folosind coeficientul Spearman și corectate pentru teste multiple prin metoda Holm-Bonferroni \cite{holm1979}, se observă o legătură puternică dintre timpul de căutare și entropia privirii ($\rho \approx 0.964$). Totuși, acest scor arată o redundanță mare în date: durata, numărul de puncte de privire și entropia privirii au corelații cuprinse între 0.93 și 1.00. Aici este important să nu tragem concluzii greșite: o entropie mare nu înseamnă neapărat că participantul a fost complet dezorientat sau că a privit haotic. Explicația este, de fapt, mult mai simplă. Când o căutare durează mult, participantul are pur și simplu timp să își plimbe privirea prin toate zonele ecranului. Astfel, fixațiile ajung să se împrăștie uniform pe toată suprafața imaginii, ceea ce crește automat valoarea entropiei. 
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=0.68\textwidth]{feature_correlation_heatmap.pdf}
+	\caption{Corelațiile Spearman dintre metrici. Căutările lungi sunt asociate cu o explorare extinsă și cu un raport mult mai mic de fixații pe Waldo.}
+	\label{fig:correlation-heatmap}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\caption{Corelațiile dintre durata totală a căutării și restul metricilor, alături de validare (valori $p$ ajustate Holm).}
+	\label{tab:correlations}
+	\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}X
+			>{\centering\arraybackslash}p{3.2cm}
+			>{\centering\arraybackslash}p{3.2cm}@{}}
+		\toprule
+		Metrică corelată cu durata & Spearman $\rho$ & $p_{Holm}$ \\
+		\midrule
+		TTFF & 0.606 & 0.0012 \\
+		entropia privirii & 0.964 & $1.14 \times 10^{-23}$ \\
+		Entropie tranziții & 0.808 & $5.01 \times 10^{-10}$ \\
+		Raport Waldo & -0.338 & 0.0861 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+Pentru a înțelege mai bine dificultatea acestor căutări, am rulat și o analiză de eșec (\emph{failure analysis}). Am selectat secvențele în care timpul de căutare a depășit mediana nivelului, iar contactul cu personajul a fost redus (cel mult o fixație pe Waldo sau un raport al fixațiilor pe Waldo sub mediana setului). Această filtrare a identificat 13 secvențe: 5 pentru \texttt{waldo\_1}, 5 pentru \texttt{waldo\_3}, 2 pentru \texttt{waldo\_4} și 1 pentru \texttt{waldo\_2}. Aceste cazuri sugerează că un timp de căutare ridicat nu înseamnă automat o scanare a imaginii, ci poate indica un blocaj în strategia de căutare.
+
+Mai departe, analizând datele (în anexă, Figura~\ref{fig:quality}), observăm o calitate ridicată a înregistrărilor. Deși lucrul cu \emph{eye-tracker}-ul în scenarii reale generează inevitabil zgomot, graficul indică un nivel redus de erori. Erorile, fie că vorbim de fixații și puncte de privire înregistrate în afara ecranului, fie de date cu un grad scăzut de încredere, sunt minime, situându-se în general sub pragul de 7\% per participant.
+
+Un alt aspect pe care l-am urmărit a fost cât de constanți s-au menținut participanții de la un nivel la altul. Dacă ne uităm la durata de căutare, graficul, care este inclus în anexă (Figura~\ref{fig:participant-consistency}), arată diferențe clare de comportament. În partea stângă îi avem pe cei care au scos timpi asemănători, indiferent de nivel. În partea dreaptă, în schimb, variațiile sunt mult mai mari: aici sunt participanții care au terminat imediat nivelurile ușoare, dar pe cele grele au pierdut zeci de secunde până să îl găsească pe Waldo. Asta arată că nu putem să împărțim pur și simplu jucătorii în rapizi și lenți. Timpul lor depinde foarte mult de dificultatea fiecărui nivel în parte, nu doar de reflexele pe care le au.
+
+Pe lângă datele din tabele, am generat și hărți de atenție (KDE) pentru fiecare participant și nivel în parte, pentru a ne asigura că datele obținute au sens. Am verificat că zonele unde s-au concentrat fixațiile se potrivesc cu conținutul nivelului, că scripturile au prins corect momentul în care privirea a ajuns pe Waldo și, nu în ultimul rând, pentru a observa ce alte elemente de pe ecran le-au atras atenția.
+Un exemplu de astfel de verificare este prezentat în Figura~\ref{fig:kde-example} din anexe.
+
+
+\section{Analiza privirii participanților}
+
+Scopul acestei etape este să înțelegem ce anume influențează zonele în care se uită participanții într-un nivel. Acționează ei dintr-un reflex vizual (\emph{bottom-up}), fiind atrași de culorile și elementele contrastante de pe ecran, sau își controlează activ privirea pentru a găsi personajul (\emph{top-down})? 
+
+Pentru a testa acest lucru, am implementat un model computațional de tip Itti-Koch \cite{itti1998} care generează hărți de proeminență vizuală (\emph{saliency}). Algoritmul procesează fiecare imagine pe mai multe canale separate. Pentru intensitate și culoare, am comparat zone locale cu vecinătatea lor pentru a evidenția regiunile care ies în contrast față de fundal. Am detectat orientarea muchiilor cu filtre Gabor pe patru direcții ($0^\circ, 45^\circ, 90^\circ, 135^\circ$) și densitatea lor cu algoritmul Canny. Pe lângă acestea, având în vedere aspectul personajului Waldo (bluza cu dungi roșii), am implementat și o altă euristică. Am adăugat un canal de \emph{color popout}, transformând imaginea în spațiul HSV și izolând pixelii cu nuanțe puternice de roșu, ceea ce avantajează modelul printr-un indiciu legat de țintă. Toate aceste canale au fost normalizate și combinate ponderat într-o singură hartă globală de \emph{saliency} pentru fiecare nivel, punând în evidență zonele care atrag atenția cel mai puternic.
+
+Peste aceste hărți, am suprapus coordonatele traseelor vizuale reale și am calculat trei metrici pentru evaluare. Prima este \emph{NSS} (Normalized Scanpath Saliency) \cite{bylinskii2019metrics}. Pentru această metrică, harta de \emph{saliency} este standardizată, astfel încât media să fie zero și deviația standard să fie 1. Apoi, pentru fiecare fixație, extragem valoarea hărții în punctul respectiv și calculăm media acestor valori. Un scor \emph{NSS} pozitiv înseamnă că fixațiile cad, în medie, pe zone mai contrastante decât restul imaginii. În datele noastre, scorurile pozitive arată că privirea participanților se intersectează pe alocuri cu elementele intens colorate, dar nu suficient pentru a explica singure traseele vizuale.
+
+Pe lângă \emph{NSS}, am verificat rezultatul și prin metrica \emph{AUC-Judd} (prezentă în Figura~\ref{fig:saliency}b). Aceasta tratează harta de \emph{saliency} ca pe un clasificator binar care trebuie să separe punctele fixate real de puncte alese aleatoriu din imagine. În cazul nostru, am comparat pixelii fixați de participanți cu un set de 2000 de coordonate generate aleatoriu. Un scor apropiat de 0.5 ar însemna o separare aproape aleatoare, iar un scor apropiat de 1 ar indica o separare foarte bună. Rezultatele \emph{AUC-Judd} confirmă tendința \emph{NSS}: modelul diferențiază fixațiile de zgomotul aleator, dar cu o performanță moderată.
+
+Totuși, diferența devine mai clară la a treia metrică, \emph{Information Gain} (IG) \cite{bylinskii2019metrics}. Aceasta evaluează modelul Itti-Koch comparându-l cu un model de referință extrem de simplu: o distribuție gaussiană plasată direct în mijlocul ecranului (\emph{center bias}), care pleacă de la premisa că participanții privesc natural spre centrul imaginii. Concret, pentru fiecare fixație, comparăm probabilitatea acordată de harta de \emph{saliency} cu probabilitatea acordată de modelul \emph{center bias}. Dacă valoarea IG este pozitivă, harta de \emph{saliency} explică fixațiile mai bine decât modelul de centru. Dacă valoarea este negativă, modelul de centru este mai bun. Deoarece pe datele noastre IG are media $-0.226$ și deviația standard $0.584$, iar mediana este $-0.207$, observăm că modelul de referință depășește modelul Itti-Koch.
+
+Mai simplu spus, rezultatele sugerează că participanții nu urmăresc automat zonele cele mai contrastante ale imaginii. Împreună cu ablația din Secțiunea 9, acest rezultat este compatibil cu o căutare ghidată de scopul sarcinii. Tocmai de aceea, gradul în care traseul privirii se aliniază (sau nu) cu aceste hărți rămâne o caracteristică pe care o includem printre datele de intrare ale modelelor ulterioare, urmând să evaluăm în Secțiunea 8 dacă aduce într-adevăr informație utilă sau dacă se comportă ca zgomot.
+
+\begin{figure}[H]
+	\centering
+	\captionsetup[subfigure]{font=small,skip=2pt}
+	
+	\begin{subfigure}[t]{0.39\textwidth}
+		\centering
+		\includegraphics[
+		width=\textwidth,
+		trim=0 0 0 0,
+		clip
+		]{global_waldo_1_saliency_overlay.pdf}
+		\caption{Privire vs. \emph{saliency} pe \texttt{waldo\_1}}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.56\textwidth}
+		\centering
+		\includegraphics[
+		width=\textwidth,
+		trim=12 8 12 8,
+		clip
+		]{saliency_metrics_by_level.pdf}
+		\caption{Metrici agregate pe nivel}
+	\end{subfigure}
+	
+	\vspace{-0.4em}
+	\caption{Comparația directă între zonele de \emph{saliency} (zonele estimate ca fiind cele mai contrastante vizual) și traseul real al privirii.}
+	\label{fig:saliency}
+\end{figure}
+
+\section{Analiza strategiilor de căutare}
+
+În această secțiune am evaluat dacă participanții își păstrează un stil individual de explorare vizuală, independent de dificultatea fiecărui nivel. Obiectivul este să verificăm dacă aceste diferențe rămân constante în comportamentul de căutare. Pentru a verifica acest lucru, am urmărit variațiile exprimate prin ritmul fixațiilor, acoperirea spațială, entropia explorării și timpul petrecut în zona personajului.
+
+Pentru această etapă am normalizat caracteristicile în interiorul fiecărui nivel. Astfel, ne asigurăm că diferențele dintre participanți nu sunt confundate cu gradul de dificultate al nivelului.
+
+Rezultatele arată că diferențele dintre participanți rămân vizibile chiar și după ce controlăm dificultatea nivelului. Cele mai vizibile diferențe apar la rata fixațiilor, lungimea traseului raportată la timp, proporția timpului petrecut pe Waldo, entropia spațială și acoperirea vizuală. Pentru a măsura acest lucru, am comparat două modele simple: unul care explică variația unei metrici folosind doar nivelul și unul care adaugă și participantul. Scorul $R^2$ arată ce proporție din variație este explicată de model. De exemplu, în cazul ratei fixațiilor, adăugarea participantului crește scorul $R^2$ cu aproximativ 0.640. Asta sugerează că ritmul de explorare este în primul rând o trăsătură individuală a participantului, nu doar o reacție la designul scenei.
+
+Pentru a valida aceste observații, am rulat o clasificare pe caracteristicile normalizate. Folosind cele mai informative patru trăsături selectate de clasificator (rata fixațiilor, lungimea traseului raportată la timp, timpul petrecut pe țintă și entropia spațială), \emph{balanced accuracy} (adică media acurateților calculate separat pentru fiecare participant) ajunge la 0.318, vizibil peste pragul de 0.091 (11 participanți). Acest scor sugerează că diferențele individuale există și pot fi captate algoritmic prin metrici de bază, așa cum se poate observa în anexe (Figura~\ref{fig:participant-behavior}).
+
+
+\section{Modelarea datelor}
+
+După analiza modului în care participanții privesc fiecare nivel, urmează etapa de predicție. Scopul este să anticipăm dacă un jucător va găsi personajul sau dacă va avea o căutare lungă, folosind doar primele cinci secunde din înregistrare. Considerăm, mai departe, că succesul înseamnă identificarea personajului pe parcursul întregului nivel, iar căutarea lungă este definită relativ la durata mediană a nivelului.
+
+Implementarea s-a bazat pe bibliotecile standard Python folosite pentru date și \emph{Machine Learning} \cite{harris2020numpy,hunter2007matplotlib,mckinney2010pandas,paszke2019pytorch,pedregosa2011scikit,seabold2010statsmodels,virtanen2020scipy,waskom2021seaborn} și pe OpenCV \cite{bradski2000opencv} pentru procesarea imaginilor.
+
+Pentru a evita supraevaluarea performanței și riscul de \emph{overfitting}, am folosit o validare de tip \emph{leave-one-participant-out}. Astfel, datele unui participant nu au fost folosite simultan atât pentru antrenare, cât și pentru testare. Pentru că setul de date este dezechilibrat (avem mai multe succese decât eșecuri), am calculat o pondere pentru clasa pozitivă (\emph{positive weight}), notată cu $w$, pe baza raportului dintre numărul de exemple negative și pozitive din setul de antrenare, care a fost integrată în funcția de pierdere Binary Cross-Entropy (BCE), aplicată asupra logiturilor generate de model. Formal, funcția se definește astfel:
+
+\[
+L(y,\hat{z}) = - \left[ w \cdot y \log \sigma(\hat{z}) + (1-y)\log(1-\sigma(\hat{z})) \right]
+\]
+unde $y$ este eticheta reală, $\hat{z}$ reprezintă logitul produs de model, iar $\sigma(\cdot)$ este funcția sigmoid.
+
+Am testat trei tipuri de modele:
+
+\textbf{1. Algoritmi clasici} \\
+Aici am extras din ferestrele de timp un set de 18 caracteristici statice (\emph{gaze only}), precum rata fixațiilor, entropia sau alinierea cu harta de \emph{saliency}. Am testat și o variantă extinsă în care am adăugat date despre contactul direct cu personajul. Am testat următoarele modele:
+\begin{itemize}
+	\item O regresie logistică, optimizată cu Adam (learning rate $0.01$).
+	\item Un Multi-Layer Perceptron simplu, cu un singur strat ascuns de 32 de neuroni. Am folosit ReLU ca funcție de activare și un strat de Dropout de 15\% pentru a reduce riscul de \emph{overfitting}.
+\end{itemize}
+
+\textbf{2. Modele pe serii de timp} \\
+În această abordare, datele au fost tratate ca serii de timp. La fiecare pas s-a extras un vector de nouă caracteristici (coordonate, viteză, accelerație, unghi și valoarea de \emph{saliency}), iar secvențele au fost aduse la 60 de pași prin \emph{padding}, excluzând de la procesare zerourile adăugate artificial. Au fost evaluate două modele:
+\begin{itemize}
+	\item \textbf{\emph{Time-Averaged MLP}:} Un model simplu care filtrează pașii de \emph{padding}, calculează media caracteristicilor în timp și trimite rezultatul către un MLP pentru clasificare.
+	\item \textbf{\emph{BiLSTM + Attention}:} Modelul folosește o rețea BiLSTM cu 64 de neuroni în stratul ascuns, ale cărei ieșiri sunt ponderate printr-un mecanism de atenție. Pentru a evita influențarea predicției, elementele de \emph{padding} sunt excluse din calcul înainte de aplicarea funcției \emph{Softmax}, astfel încât rețeaua să aloce importanță doar fixațiilor reale.
+\end{itemize}
+
+\textbf{3. Modele de tranziție (Predicția mișcării)} \\
+În această abordare, am urmărit să anticipăm în ce zonă a ecranului se va muta privirea. Pentru a realiza acest lucru, am împărțit imaginea într-o grilă $2 \times 2$ (4 cadrane). Folosind locația curentă, locația anterioară și dinamica sacadei, modelul trebuie să prezică următorul cadran vizitat. Am comparat o arhitectură MLP cu un model statistic: un Lanț Markov de ordinul întâi, care calculează direct matricea probabilităților de tranziție dintr-un cadran în altul. Matricele de tranziție per nivel sunt prezentate în Figura~\ref{fig:appendix-transitions} din anexe.
+
+Pentru evaluare am folosit \emph{balanced accuracy} ca metrică principală, deoarece setul de date este dezechilibrat. Această metrică calculează media dintre rata de recunoaștere a clasei pozitive și rata de recunoaștere a clasei negative:
+\[
+\mathrm{Balanced\ Accuracy} = \frac{1}{2}\left(\frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right)
+\]
+unde $TP$ și $TN$ sunt predicțiile corecte pentru clasele pozitivă și negativă, iar $FP$ și $FN$ sunt erorile de clasificare. Spre deosebire de acuratețea simplă sau de scorul F1, \emph{balanced accuracy} penalizează modelele care prezic aproape mereu clasa majoritară și ignoră clasa mai rară.
+
+\subsection{Rezultate și interpretare} 
+ 
+Pentru predicția succesului, regresia logistică antrenată pe caracteristici extinse (\emph{gaze+target}) a obținut cel mai bun rezultat, cu un \emph{balanced accuracy} de 0.705 și un scor F1 de 0.814, ceea ce arată că informația despre contactul direct cu personajul este foarte importantă. Varianta \emph{gaze+target} folosește și informația că privirea a ajuns pe Waldo în primele secunde, deci nu măsoară doar dinamica generală a privirii. În contrast, pentru anticiparea unui blocaj (căutare lungă), adăugarea acestor date nu ajută rezultatul, iar varianta bazată exclusiv pe explorare spațială obține rezultate mai bune. Totuși, fără informația de contact, regresia logistică pentru predicțiile succesului are un \emph{balanced accuracy} scăzut (0.459), semn că trăsăturile de explorare nu reușesc să separe singure succesul de eșec, pe setul nostru de date.
+
+Mai departe, în ceea ce privește seriile de timp, modelul care face media caracteristicilor pe fereastra de timp (\emph{Time-Averaged MLP}) a obținut scoruri mai bune, cel mai bun scor fiind de 0.792 la predicția căutărilor lungi. În paralel, arhitectura avansată \emph{BiLSTM} a obținut scoruri mai slabe în toate testele (0.511 la predicția succesului și 0.589 la predicția căutării lungi). O explicație ține de volumul redus al datelor: rețeaua recurentă, având mai mulți parametri și o capacitate mai mare, a ajuns rapid la \emph{overfitting}, în ciuda regularizării aplicate.
+
+În final, pentru predicția următoarei mișcări, abordarea lanțului Markov de ordinul 1 (0.643) depășește atât rețeaua neuronală (\emph{MLP pentru Tranziție} - 0.586), cât și predicția majoritară, susținând utilitatea matricelor de tranziție extrase.
+
+Această alegere este importantă în interpretarea rezultatelor noastre: un clasificator de tip majoritar atinge un scor F1 ridicat, de 0.849, fără a prezice niciun eșec. În acest caz, scorul F1 supraestimează performanța reală, în timp ce \emph{balanced accuracy} arată mai clar dacă modelul separă ambele clase.
+
+Scorurile din Tabela~\ref{tab:predictive-results}, aflată în anexe, sunt calculate pe baza tuturor predicțiilor adunate din cele 11 fold-uri de leave-one-participant-out.
+
+\section{Interpretabilitatea modelelor}
+
+Pentru a verifica dacă modelele folosesc tipare relevante de comportament și nu doar zgomotul din date, am realizat o analiză de interpretabilitate și stabilitate. Am urmărit trei lucruri: ce se întâmplă dacă eliminăm grupuri întregi de caracteristici, ce coeficienți primește regresia logistică și dacă mecanismul de atenție al modelului recurent pune accent pe anumite momente din secvență.
+
+\textbf{1. Ablația și extragerea coeficienților} \\
+Pentru a înțelege importanța fiecărei trăsături, am analizat coeficienții atribuiți de regresia logistică. În paralel, am implementat un studiu de ablație. Am împărțit caracteristicile în cinci tipuri după rolul lor în analiză: dinamică oculară (\emph{gaze dynamics}), explorare spațială (\emph{spatial search}), structură/entropie (\emph{entropy structure}), contactul cu personajul și alinierea cu \emph{saliency}. Apoi, am reantrenat modelul excluzând iterativ câte un grup, pentru a măsura impactul direct asupra performanței de clasificare (Figura~\ref{fig:ablation-sensitivity}a). Coeficienții regresiei logistice pentru predicția succesului sunt detaliați în Tabela~\ref{tab:appendix-weights} din anexe.
+
+Rezultatele sunt compatibile cu observațiile deduse în etapa de analiză exploratorie:
+\begin{itemize}
+	\item Excluderea informațiilor despre contactul direct cu personajul penalizează cel mai mult modelul pentru predicția succesului, reducând \emph{balanced accuracy} cu 0.230.
+	\item Eliminarea metricilor de entropie reduce balanced accuracy cu 0.120 pentru anticiparea unei căutări lungi.
+	\item O observație importantă apare la excluderea datelor legate de \emph{saliency}. Fără aceste date la antrenament, performanța modelului din ablație nu a scăzut, ci a crescut față de modelul complet al ablației, de la 0.689 la 0.764. Având în vedere setul restrâns de date, acest rezultat trebuie tratat mai degrabă ca o tendință, nu ca o regulă generală. Totuși, el arată că într-o sarcină ghidată strict de intenție (\emph{top-down}), culorile stridente pot acționa ca zgomot, afectând stabilitatea modelului.
+\end{itemize}
+
+\textbf{2. Mecanismul de atenție (BiLSTM)} \\
+Pentru modelul recurent, am extras ponderile generate de mecanismul de atenție (prin funcția \emph{Softmax}) pentru a verifica dacă modelul tratează diferit pașii din secvență. Această verificare a fost folosită ca analiză a modelului, însă rezultatul principal rămâne comparația de performanță din Tabela~\ref{tab:predictive-results}: pe setul actual, \emph{BiLSTM + Attention} nu depășește modelul  simplu bazat pe serii de timp.
+
+\textbf{3. Analiza de stabilitate} \\
+În final, ca să verificăm stabilitatea rezultatelor, am eliminat din antrenament și testare sesiunile cu zgomot: cele cu peste 5\% din fixații în afara ecranului sau cu \emph{timestamp}-uri trunchiate. După reantrenarea modelelor pe aceste date filtrate, \emph{balanced accuracy} a rămas apropiat de scorul inițial (în anexă, Figura~\ref{fig:ablation-sensitivity}b). Acest test sugerează că rezultatele reflectă tipare de explorare vizuală și nu doar erori de înregistrare ale \emph{eye-tracker}-ului.
+
+%În cele din urmă, am inclus și o analiză biometrică, pe care am formulat-o ca o problemă de \emph{intruder detection} (verificare continuă a identității). Scopul a fost să %vedem dacă modul în care ochiul se mișcă pe ecran este suficient de unic încât să poată fi folosit drept semnătură digitală, permițând sistemului să recunoască participantul %și să respingă un eventual intrus.
+%
+%Pentru a construi profilele, am extras dinamica traseelor vizuale (viteza sacadelor, accelerația, unghiul și distanța). Apoi, am comparat un model de referință simplu, care %măsoară distanța Euclidiană față de media profilului, cu un algoritm de aliniere a seriilor de timp (\emph{Dynamic Time Warping} - DTW, rulat pe coordonatele brute).
+%
+%Rezultatele arată că cel mai bun model (DTW) a obținut un \emph{balanced accuracy} de 0.565. Sistemul are în continuare rate de eroare mari atât la acceptarea falsă a %intrușilor (\emph{FAR} \textbf{$\approx$ 0.43}), cât și la respingerea participantului real (\emph{FRR} \textbf{$\approx$ 0.44}). Totuși, dacă raportăm acest scor la modelul %de referință bazat pe distanța Euclidiană (0.460) și la probabilitatea aleatoare de a ghici un participant din 11 (0.09), este clar că algoritmul reușește totuși să capteze o %amprentă biometrică a ochiului.
+%
+%Matricea de confuzie a modelului DTW (Figura~\ref{fig:biometric}) explică perfect această limitare. Fiind un joc de căutare, structura nivelului forțează practic toți %jucătorii să se uite în aceleași locuri. Traseul vizual ajunge să fie dictat de imaginea de pe ecran, și nu de reflexele individuale. Acest lucru estompează amprenta %biometrică și face algoritmii să confunde participanții între ei.
+%
+%\begin{figure}[htbp]
+%	\centering
+%	\includegraphics[width=0.75\textwidth]{confusion_matrix.pdf}
+%	\caption{Confuzia între participanți. Deși modelul identifică corect majoritatea persoanelor se observă confuzii clare.}
+%	\label{fig:biometric}
+%\end{figure}
+

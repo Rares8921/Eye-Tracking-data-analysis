@@ -1,0 +1,9 @@
+scenario,family,task,best_model,balanced_accuracy,n_samples
+all_data,sequence,label_found_waldo,mean_pool_mlp,0.5722222222222222,39
+all_data,sequence,label_long_search,mean_pool_mlp,0.7921052631578948,39
+drop_zero_fix_levels,sequence,label_found_waldo,mean_pool_mlp,0.5722222222222222,39
+drop_zero_fix_levels,sequence,label_long_search,mean_pool_mlp,0.7921052631578948,39
+drop_quality_flagged_participants,sequence,label_found_waldo,mean_pool_mlp,0.5793650793650793,37
+drop_quality_flagged_participants,sequence,label_long_search,bilstm_attention,0.7323529411764705,37
+drop_both,sequence,label_found_waldo,mean_pool_mlp,0.5793650793650793,37
+drop_both,sequence,label_long_search,bilstm_attention,0.7323529411764705,37

@@ -1,0 +1,3 @@
+outcome,outcome_label,model_type,test,effect_size_proxy,p_value,n_rows,n_participants,transform
+annotated_duration_s,Durata căutării,participant_fixed_effects_anova,level_effect,0.7351333347553692,5.800352713802962e-06,42,11,natural_log
+ttff_waldo_s,TTFF,participant_fixed_effects_anova,level_effect,0.6409513027996901,0.0029502445154270074,31,11,natural_log

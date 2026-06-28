@@ -1,0 +1,216 @@
+\appendix
+\section{Anexe}
+
+\subsection{Rezultatele modelării}
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Performanța modelelor evaluată pe ferestre de 5 secunde. \emph{Balanced accuracy} este metrica principală.}
+	\label{tab:predictive-results}
+	\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}Xrr@{}}
+		\toprule
+		Abordare & Sarcină / Model & Balanced Acc. & Scor F1 \\
+		\midrule
+		\textbf{Clasic} & \textbf{Predicția Succesului} & & \\
+		& \emph{Majority} & 0.500 & 0.849 \\
+		& Regresie Logistică (\emph{gaze only}) & 0.459 & 0.678 \\
+		& Regresie Logistică (\emph{gaze + target}) & \textbf{0.705} & 0.814 \\
+		\midrule
+		\textbf{Clasic} & \textbf{Predicția Căutării Lungi} & & \\
+		& \emph{Majority} & 0.409 & 0.000 \\
+		& Regresie Logistică (\emph{gaze only}) & \textbf{0.693} & \textbf{0.698} \\
+		& Regresie Logistică (\emph{gaze + target}) & 0.598 & 0.605 \\
+		\midrule
+		\textbf{Recurent} & \textbf{Predicția Succesului} & & \\
+		& \emph{Time-Averaged MLP} & \textbf{0.572} & 0.750 \\
+		& \emph{BiLSTM + Attention} & 0.511 & 0.787 \\
+		\midrule
+		\textbf{Recurent} & \textbf{Predicția Căutării Lungi} & & \\
+		& \emph{Time-Averaged MLP} & \textbf{0.792} & \textbf{0.765} \\
+		& \emph{BiLSTM + Attention} & 0.589 & 0.579 \\
+		\midrule
+		\textbf{Tranziție} & \textbf{Predicția Următoarei Mișcări} & & \\
+		& \emph{Majority} & 0.250 & 0.136 \\
+		& \emph{MLP Tranziție} & 0.586 & 0.591 \\
+		& Lanț Markov (ordin 1) & \textbf{0.643} & \textbf{0.641} \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\newpage
+
+\subsection{Coeficienții modelului liniar (Sarcina de succes)}
+În completarea analizei de ablație de la secțiunea de Interpretabilitate, Tabela~\ref{tab:appendix-weights} arată caracteristicile cu cele mai mari valori ale coeficienților în regresia logistică. Numele din tabel sunt cele interne ale trăsăturilor folosite în cod. Semnul coeficientului arată direcția relației cu predicția succesului: valorile pozitive cresc logitul pentru succes, iar cele negative îl scad.
+
+\begin{table}[H]
+	\centering
+	\small
+	\caption{Caracteristicile folosite în regresia logistică pentru predicția succesului.}
+	\label{tab:appendix-weights}
+	\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xrr@{}}
+		\toprule
+		Caracteristică & Coeficient & Direcție \\
+		\midrule
+		\texttt{early\_spatial\_coverage\_hull} & -1.554 & negativă \\
+		\texttt{early\_total\_fix\_duration\_s} & 1.388 & pozitivă \\
+		\texttt{early\_gaze\_entropy} & 1.330 & pozitivă \\
+		\texttt{early\_gaze\_count} & -1.297 & negativă \\
+		\texttt{early\_saccade\_length\_avg} & 1.291 & pozitivă \\
+		\texttt{early\_scanpath\_length\_per\_s} & -1.157 & negativă \\
+		\texttt{early\_direct\_hit\_count} & 1.155 & pozitivă \\
+		\texttt{early\_hit\_any} & 1.152 & pozitivă \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+%\subsection{Verificări suplimentare}
+\subsection{Rezultate suplimentare pentru interpretabilitate}
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{ablation_score_drop.pdf}
+		\caption{Ablație pe grupuri}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{sensitivity_balacc.pdf}
+		\caption{Stabilitatea la filtrarea zgomotului}
+	\end{subfigure}
+	\caption{Graficul din stânga arată modificarea performanței atunci când un grup de caracteristici este eliminat. Valorile pozitive înseamnă că performanța scade după eliminare, deci grupul era util. În dreapta, rezultatele arată că modelele își păstrează performanța chiar și după ce înregistrările cu erori de la \emph{eye-tracker} sunt eliminate din setul de date.}
+	\label{fig:ablation-sensitivity}
+\end{figure}
+
+\clearpage
+
+\subsection{Verificări vizuale ale datelor}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.78\textwidth]{recording_quality_overview.pdf}
+	\caption{Indicatorii de calitate ai datelor per participant. Valorile rămân reduse pentru toți participanții.}
+	\label{fig:quality}
+\end{figure}
+
+\vspace{-0.5em}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.68\textwidth]{participant_consistency_cv.pdf}
+	\caption{Variația timpului de căutare pe participant. Fluctuațiile mari arată că timpul depinde foarte mult de dificultatea nivelului, nu doar de cât de rapid este participantul.}
+	\label{fig:participant-consistency}
+\end{figure}
+
+\vspace{-0.5em}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{waldo1_distractor_kde.pdf}
+	\caption{Exemplu de hartă de atenție (KDE) suprapusă peste nivel}
+	\label{fig:kde-example}
+\end{figure}
+
+\clearpage
+
+\subsection{Matricele de tranziție spațială pe nivel}
+Pentru a detalia vizual calculul entropiei de tranziție (Secțiunea 5) și rezultatele modelului Markov (Secțiunea 8), Figura~\ref{fig:appendix-transitions} ilustrează probabilitățile de trecere între cele 4 cadrane ale ecranului (grila 2×2 folosită de modelul Markov din Secțiunea 8; entropia de tranziție din Secțiunea 5 este calculată separat, pe grila de 4×4). Pe toate nivelurile, probabilitatea cea mai mare rămâne pe diagonală, ceea ce arată că privirea tinde să rămână în același cadran între două tranziții consecutive.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{waldo_1_transition_matrix.pdf}
+		\caption{\texttt{waldo\_1}}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{waldo_2_transition_matrix.pdf}
+		\caption{\texttt{waldo\_2}}
+	\end{subfigure}
+	
+	\vspace{0.5em}
+	
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{waldo_3_transition_matrix.pdf}
+		\caption{\texttt{waldo\_3}}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[t]{0.48\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{waldo_4_transition_matrix.pdf}
+		\caption{\texttt{waldo\_4}}
+	\end{subfigure}
+	\caption{Matricele de tranziție agregate pe nivel (4 cadrane).}
+	\label{fig:appendix-transitions}
+\end{figure}
+
+\clearpage
+
+\subsection{Rezultate suplimentare pentru diferențele individuale}
+În completarea Secțiunii 7, Tabela~\ref{tab:appendix-participant-profiles} arată rezultatele clasificării exploratorii între participanți. Fiecare rând folosește un alt subset de caracteristici normalizate pe nivel. Rezultatele arată că includerea tuturor metricilor introduce zgomot, performanța optimă fiind obținută printr-un subset restrâns de patru caracteristici.
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[t]{0.92\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{participant_profile_heatmap.pdf}
+		\caption{Caracteristici comportamentale normalizate}
+	\end{subfigure}
+	
+	\vspace{0.8em}
+	
+	\begin{subfigure}[t]{0.75\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{participant_variance_gain.pdf}
+		\caption{Variația explicată de participant}
+	\end{subfigure}
+	\caption{Diferențe individuale după normalizarea pe nivel. În stânga, fiecare celulă arată abaterea participantului față de mediana nivelului pentru o anumită metrică. În dreapta, barele arată cât crește $R^2$ atunci când participantul este adăugat peste modelul bazat doar pe nivel.}
+	\label{fig:participant-behavior}
+\end{figure}
+
+\begin{table}[H]
+	\centering
+	\caption{Performanța clasificării exploratorii între participanți pentru mai multe subseturi de caracteristici.}
+	\label{tab:appendix-participant-profiles}
+	\begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xrrr@{}}
+		\toprule
+		Reprezentare & Nr. caract. & Accuracy & Balanced accuracy \\
+		\midrule
+		Top 4 caracteristici individuale & 4 & 0.350 & 0.318 \\
+		Top 5 caracteristici individuale & 5 & 0.325 & 0.295 \\
+		Top 8 caracteristici individuale & 8 & 0.325 & 0.295 \\
+		Scoruri comportamentale agregate & 4 & 0.275 & 0.250 \\
+		Toate metricile & 14 & 0.250 & 0.227 \\
+		Explorare largă & 5 & 0.225 & 0.205 \\
+		Focus pe țintă & 5 & 0.200 & 0.182 \\
+		Ritm vizual & 3 & 0.200 & 0.182 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+Raportat la probabilitatea aleatoare de $\approx 0.091$ (aferentă celor 11 clase), valoarea maximă de \emph{balanced accuracy}, 0.318, susține observațiile anterioare. Mai exact, ritmul fixațiilor, lungimea traseului raportată la timp, timpul alocat țintei și entropia spațială reprezintă principalele ancore comportamentale care diferențiază participanții în această sarcină.
+
+Mai departe, Figura~\ref{fig:appendix-participant-behavior} detaliază aceeași analiză. Graficul din stânga grupează metricile în: explorare extinsă, orientare eficientă, focus pe personaj și ritm vizual. Unele bare pot lipsi sau pot fi aproape de zero atunci când scorul participantului este foarte apropiat de media setului. Matricea din dreapta este matricea de confuzie pentru clasificarea între participanți.
+
+\begin{figure}[!htbp]
+	\centering
+	\begin{subfigure}[t]{0.92\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{participant_style_scores.pdf}
+		\caption{Scoruri comportamentale pe participant}
+	\end{subfigure}
+	
+	\vspace{0.8em}
+	
+	\begin{subfigure}[t]{0.75\textwidth}
+		\centering
+		\includegraphics[width=\textwidth]{participant_profile_confusion_matrix.pdf}
+		\caption{Matrice exploratorie de confuzie}
+	\end{subfigure}
+	\caption{Detalierea diferențelor individuale. Figura din stânga arată scorurile comportamentale per participant, iar matricea din dreapta arată unde clasificarea confundă participanții între ei.}
+	\label{fig:appendix-participant-behavior}
+\end{figure}

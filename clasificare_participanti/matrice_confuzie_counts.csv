@@ -1,0 +1,12 @@
+,Participant 1,Participant 2,Participant 3,Participant 4,Participant 5,Participant 6,Participant 7,Participant 8,Participant 9,Participant 10,Participant 11
+Participant 1,0,0,0,0,0,0,1,0,0,0,1
+Participant 2,0,0,0,1,0,0,0,1,0,0,0
+Participant 3,0,0,3,1,0,0,0,0,0,0,0
+Participant 4,1,0,1,0,0,1,0,0,0,0,1
+Participant 5,0,0,0,1,2,0,0,1,0,0,0
+Participant 6,0,0,0,0,0,1,1,0,1,0,1
+Participant 7,0,0,0,1,0,0,1,0,1,0,1
+Participant 8,0,1,0,0,1,1,0,0,0,0,1
+Participant 9,0,0,0,0,1,0,1,0,2,0,0
+Participant 10,0,0,0,0,0,0,0,1,0,3,0
+Participant 11,1,1,0,0,0,0,0,0,0,0,2

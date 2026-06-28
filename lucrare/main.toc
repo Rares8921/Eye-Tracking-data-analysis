@@ -1,0 +1,26 @@
+\xpg@aux {}{romanian}
+\xpg@aux {}{romanian}
+\xpg@aux {}{romanian}
+\xpg@aux {}{english}
+\xpg@aux {}{romanian}
+\contentsline {section}{\numberline {1}Introducere}{5}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Obiectivele tezei}{6}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Contribuții}{7}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Preliminarii și context științific}{8}{section.2}%
+\contentsline {section}{\numberline {3}Pregătirea experimentului}{10}{section.3}%
+\contentsline {section}{\numberline {4}Construirea setului de date}{11}{section.4}%
+\contentsline {section}{\numberline {5}Preprocesare și analiza exploratorie a datelor}{12}{section.5}%
+\contentsline {section}{\numberline {6}Analiza privirii participanților}{16}{section.6}%
+\contentsline {section}{\numberline {7}Analiza strategiilor de căutare}{18}{section.7}%
+\contentsline {section}{\numberline {8}Modelarea datelor}{19}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Rezultate și interpretare}{21}{subsection.8.1}%
+\contentsline {section}{\numberline {9}Interpretabilitatea modelelor}{22}{section.9}%
+\contentsline {section}{\numberline {10}Concluzii}{24}{section.10}%
+\contentsline {section}{Bibliografie}{25}{section*.8}%
+\contentsline {section}{\numberline {A}Anexe}{28}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Rezultatele modelării}{28}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Coeficienții modelului liniar (Sarcina de succes)}{29}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Rezultate suplimentare pentru interpretabilitate}{29}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}Verificări vizuale ale datelor}{30}{subsection.A.4}%
+\contentsline {subsection}{\numberline {A.5}Matricele de tranziție spațială pe nivel}{31}{subsection.A.5}%
+\contentsline {subsection}{\numberline {A.6}Rezultate suplimentare pentru diferențele individuale}{32}{subsection.A.6}%

@@ -1,0 +1,12 @@
+\section{Concluzii}
+
+Teza a urmărit ambele obiective: am transformat înregistrările într-un set de date utilizabil, am explicat comportamentul vizual într-o sarcină de căutare și am arătat că aceste strategii pot fi analizate și modelate algoritmic.
+
+Concluziile principale, susținute direct de date, sunt următoarele:
+\begin{itemize}
+	\item \textbf{Căutarea orientată pe scop:} Participanții nu caută la întâmplare și nu sunt ghidați în principal de culorile stridente ale nivelului. Atât calculul \emph{Information Gain} pe hărțile de \emph{saliency}, cât și testele de ablație au arătat că aceste indicii vizuale pot introduce zgomot în model atunci când jucătorul are un obiectiv clar de rezolvat (\emph{top-down}).
+	\item \textbf{Acuratețea modelelor simple:} Pe un set de date redus, limitat la primele secunde de înregistrare, algoritmii clasici (regresia logistică și lanțurile Markov) au obținut rezultate mai bune decât rețelele recurente. În lipsa unui volum mare de date, arhitecturile complexe sunt mai expuse la \emph{overfitting}, în timp ce modelele simple au generalizat mai bine pe setul nostru de date. Această concluzie este însă strâns legată de dimensiunea mică a eșantionului și ar trebui reconfirmată pe un volum mai mare de date.
+	\item \textbf{Variabilitatea stilului de explorare:} Deși o sarcină de tip \emph{Find Waldo} impune un anumit traseu vizual dictat de nivel, participanții își mențin un stil individual de căutare. Analiza a arătat că metrici precum ritmul fixațiilor și entropia spațială conțin diferențe comportamentale între participanți, independente de dificultatea nivelului.
+\end{itemize}
+
+Pe viitor, dezvoltarea firească a proiectului este extinderea setului de date. Un volum mai mare ar permite antrenarea unor arhitecturi \emph{Deep Learning} mai complexe și extragerea unor dependențe pe termen lung. De asemenea, colectarea datelor în sesiuni multiple (\emph{cross-session}), pe parcursul mai multor zile, ar ajuta la verificarea stabilității în timp a acestor stiluri individuale de explorare.

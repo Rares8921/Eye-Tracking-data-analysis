@@ -1,0 +1,2 @@
+recording_id,level_name,num_fixations_total,num_fixations_waldo,saliency_std,saliency_range,NSS_all_vs_saliency,NSS_waldo_vs_saliency,KL_fixmap_saliency,Pearson_fixmap_saliency,AUCJ_fix_saliency,AUCJ_waldo_saliency,SIM_fixmap_saliency,IG_fix_vs_centerbias,IG_waldo_vs_centerbias
+2025-09-26_19-12-44-115b6a40,waldo_2,5,3,0.29592087864875793,1.0,0.7002187023594502,0.5475244700822897,2.9843010044267455,0.10296785286684501,0.7268,0.6125833333333334,0.09314862028148468,-0.36253311971482843,-0.27508520847128953

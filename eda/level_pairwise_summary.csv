@@ -1,0 +1,13 @@
+outcome,outcome_label,comparison,median_difference,n_pairs,p_value,p_value_holm
+annotated_duration_s,Durata căutării,waldo_1 vs waldo_2,89.62650000000001,10,0.001953125,0.01171875
+annotated_duration_s,Durata căutării,waldo_1 vs waldo_3,69.233,10,0.009765625,0.0390625
+annotated_duration_s,Durata căutării,waldo_1 vs waldo_4,58.07599999999999,10,0.001953125,0.01171875
+annotated_duration_s,Durata căutării,waldo_2 vs waldo_3,-5.4184999999999945,10,0.02734375,0.08203125
+annotated_duration_s,Durata căutării,waldo_2 vs waldo_4,-2.4879999999999924,10,0.232421875,0.412109375
+annotated_duration_s,Durata căutării,waldo_3 vs waldo_4,8.62100000000001,11,0.2060546875,0.412109375
+ttff_waldo_s,TTFF,waldo_1 vs waldo_2,13.075263520000004,8,0.0390625,0.1953125
+ttff_waldo_s,TTFF,waldo_1 vs waldo_3,-7.208857856,5,0.4375,0.875
+ttff_waldo_s,TTFF,waldo_1 vs waldo_4,8.076706144,6,0.21875,0.65625
+ttff_waldo_s,TTFF,waldo_2 vs waldo_3,-12.17749696,5,0.0625,0.25
+ttff_waldo_s,TTFF,waldo_2 vs waldo_4,0.5487589759999878,5,0.4375,0.875
+ttff_waldo_s,TTFF,waldo_3 vs waldo_4,28.303811168000003,6,0.03125,0.1875

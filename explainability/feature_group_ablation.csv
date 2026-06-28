@@ -1,0 +1,13 @@
+task,feature_set,ablation,balanced_accuracy,score_drop
+label_found_waldo,gaze_plus_target,none,0.6891495601173021,0.0
+label_found_waldo,gaze_plus_target,gaze_dynamics,0.6143695014662757,0.07478005865102644
+label_found_waldo,gaze_plus_target,spatial_search,0.6275659824046921,0.06158357771261003
+label_found_waldo,gaze_plus_target,entropy_structure,0.5527859237536656,0.13636363636363646
+label_found_waldo,gaze_plus_target,saliency_alignment,0.7639296187683284,-0.07478005865102633
+label_found_waldo,gaze_plus_target,target_contact,0.45894428152492667,0.23020527859237544
+label_long_search,gaze_only,none,0.6931818181818181,0.0
+label_long_search,gaze_only,gaze_dynamics,0.7159090909090908,-0.022727272727272707
+label_long_search,gaze_only,spatial_search,0.7136363636363636,-0.020454545454545503
+label_long_search,gaze_only,entropy_structure,0.5727272727272728,0.12045454545454537
+label_long_search,gaze_only,saliency_alignment,0.6681818181818182,0.02499999999999991
+label_long_search,gaze_only,target_contact,0.6931818181818181,0.0

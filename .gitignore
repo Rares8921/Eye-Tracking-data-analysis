@@ -1,7 +1,9 @@
-dataset/train/
-dataset/val/
-**/world.mp4
-gaze_videos/
-/.idea
-/.ipynb_checkpoints
-/__pycache__
+recordings/**/world.mp4
+__pycache__/
+*.pyc
+.idea/
+lucrare/*.aux
+lucrare/*.log
+lucrare/*.bcf
+lucrare/*.blg
+lucrare/*.run.xml
